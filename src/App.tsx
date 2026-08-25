@@ -851,7 +851,7 @@ function PreTripPreparationCard({
   const nextTask = tasks.find((task) => !task.completed);
   return (
     <section className="pretrip-card">
-      <div className="pretrip-header"><div className="pretrip-title"><div className="info-card-icon task-icon"><ClipboardCheck size={21} /></div><div><span className="eyebrow">BEFORE YOU GO</span><h2>行前準備</h2><p>{completed} / {tasks.length} 項完成</p></div></div><button className="text-button" onClick={onGoToTrip}>查看清單 <ChevronRight size={16} /></button></div>
+      <div className="pretrip-header"><div className="pretrip-title"><div className="info-card-icon task-icon"><ClipboardCheck size={21} /></div><div><span className="eyebrow">BEFORE YOU GO</span><h2>行前準備</h2><p>{completed} / {tasks.length} 項完成</p></div></div><button className="text-button" onClick={onGoToTrip}>{managerMode ? <Pencil size={15} /> : null}{managerMode ? "編輯清單" : "查看清單"} <ChevronRight size={16} /></button></div>
       {nextTask ? (
         <div className="pretrip-next"><button className="task-check" aria-label={managerMode ? `標記完成：${nextTask.title}` : nextTask.title} disabled={!managerMode} onClick={() => managerMode && onToggleTask(nextTask.id)} /><div><span>下一項準備</span><strong>{nextTask.title}</strong></div>{managerMode && <span className="pretrip-hint">點擊圓圈完成</span>}</div>
       ) : (
