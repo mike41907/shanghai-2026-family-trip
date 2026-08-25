@@ -122,32 +122,27 @@ export function getDayProgress(day: TripDay, now = new Date()): DayProgress {
   return { status: "complete" };
 }
 
-export function getMapUrl(title: string, address?: string): string {
+export function getMapUrl(title: string, address?: string, callNative = false): string {
   const query = encodeURIComponent(address ? `${title} ${address}` : title);
-  return `https://uri.amap.com/search?keyword=${query}&city=${encodeURIComponent("上海")}`;
+  const callNativeParam = callNative ? "1" : "0";
+  return `https://uri.amap.com/search?keyword=${query}&city=${encodeURIComponent("上海")}&view=map&src=shanghai-2026-pwa&callnative=${callNativeParam}`;
 }
 
 export function openAmap(title: string, address?: string): void {
-  const webUrl = getMapUrl(title, address);
-  const query = encodeURIComponent(address ? `${title} ${address}` : title);
-  const appUrl = `amapuri://search?keyword=${query}&city=${encodeURIComponent("上海")}`;
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const webUrl = getMapUrl(title, address, isMobile);
 
   if (!isMobile) {
     window.open(webUrl, "_blank", "noopener,noreferrer");
     return;
   }
 
-  let leftPage = false;
-  const onVisibilityChange = () => {
-    leftPage = document.visibilityState === "hidden";
-  };
-  document.addEventListener("visibilitychange", onVisibilityChange);
-  window.location.href = appUrl;
-  window.setTimeout(() => {
-    document.removeEventListener("visibilitychange", onVisibilityChange);
-    if (!leftPage && document.visibilityState === "visible") window.location.href = webUrl;
-  }, 900);
+  // Use Amap's official HTTPS URI entry point on mobile. It asks the URI
+  // service to open the installed app and falls back to web search when the
+  // app or the requested native route is unavailable. The old
+  // `amapuri://search` private scheme can open Amap but trigger an
+  // unsupported-function/upgrade dialog on current iOS versions.
+  window.location.href = webUrl;
 }
 
 export function getMeituanUrl(name: string): string {
