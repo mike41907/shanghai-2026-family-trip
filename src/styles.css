@@ -2029,6 +2029,7 @@ code {
   }
 
   .today-hero,
+  .weather-card,
   .live-card,
   .day-overview-card,
   .transit-card,
@@ -2141,6 +2142,139 @@ code {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+/* Shanghai weather */
+.weather-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.weather-card-heading,
+.weather-main,
+.weather-condition,
+.weather-facts span,
+.weather-footer {
+  display: flex;
+  align-items: center;
+}
+
+.weather-card-heading {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weather-card-heading h2 {
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 18px;
+  letter-spacing: -0.04em;
+}
+
+.weather-card-heading > svg {
+  color: var(--accent);
+}
+
+.weather-main {
+  min-width: 0;
+  gap: 10px;
+}
+
+.weather-symbol {
+  flex: 0 0 auto;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.weather-condition {
+  min-width: 0;
+  flex: 1;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.weather-condition strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weather-condition span,
+.weather-footer,
+.weather-note,
+.weather-loading,
+.weather-unavailable {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.weather-temperature {
+  flex: 0 0 auto;
+  color: var(--ink);
+  font-size: 24px;
+  letter-spacing: -0.06em;
+}
+
+.weather-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.weather-facts span {
+  gap: 4px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.weather-facts svg {
+  color: var(--accent);
+}
+
+.weather-note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.weather-footer {
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+}
+
+.weather-footer span {
+  color: var(--muted);
+}
+
+.weather-loading,
+.weather-unavailable {
+  padding: 5px 0;
+}
+
+.weather-loading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.weather-loading-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 5px var(--accent-soft);
 }
 
 /* Pre-trip preparation */

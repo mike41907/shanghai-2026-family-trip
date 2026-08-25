@@ -2,6 +2,7 @@ import {
   CalendarDays,
   Check,
   ClipboardCheck,
+  CloudSun,
   ChevronDown,
   ChevronRight,
   CircleAlert,
@@ -11,6 +12,7 @@ import {
   CloudUpload,
   Copy,
   Download,
+  Droplets,
   ExternalLink,
   FileJson,
   FileText,
@@ -40,6 +42,7 @@ import {
   Utensils,
   Users,
   WalletCards,
+  Wind,
   X
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -58,6 +61,15 @@ import {
   type TravelToolsData
 } from "./lib/travelTools";
 import { formatPaymentOcrStatus, recognizePaymentScreenshot, type PaymentOcrResult } from "./lib/paymentOcr";
+import {
+  describeWeatherCode,
+  fetchShanghaiWeather,
+  formatWeatherTemperature,
+  readCachedWeather,
+  writeCachedWeather,
+  type WeatherDay,
+  type WeatherSnapshot
+} from "./lib/weather";
 import {
   clone,
   copyText,
@@ -840,6 +852,8 @@ function TodayPage({
         </div>
       </section>
 
+      <WeatherCard targetDate={reference.day.date} />
+
       {isBeforeTrip && <PreTripPreparationCard tasks={tasks} managerMode={managerMode} onToggleTask={onToggleTask} onGoToTrip={onGoToTrip} />}
 
       <section className="live-grid">
@@ -902,6 +916,66 @@ function TodayPage({
       <TransitCard segments={reference.day.transitSegments} compact />
     </div>
   );
+}
+
+function WeatherCard({ targetDate }: { targetDate: string }) {
+  const [weather, setWeather] = useState<WeatherSnapshot | null>(() => readCachedWeather());
+  const [loading, setLoading] = useState(() => weather === null);
+  const [offline, setOffline] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12_000);
+    let active = true;
+    setLoading(true);
+    fetchShanghaiWeather(controller.signal).then((nextWeather) => {
+      if (!active) return;
+      writeCachedWeather(nextWeather);
+      setWeather(nextWeather);
+      setOffline(false);
+    }).catch(() => {
+      if (active) setOffline(true);
+    }).finally(() => {
+      window.clearTimeout(timeout);
+      if (active) setLoading(false);
+    });
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, []);
+
+  const todayInShanghai = weather?.current.time.slice(0, 10);
+  const targetForecast = weather?.daily.find((day) => day.date === targetDate);
+  const isTargetToday = Boolean(todayInShanghai && todayInShanghai === targetDate);
+  const showForecast = Boolean(targetForecast && !isTargetToday);
+
+  return (
+    <section className="weather-card" aria-live="polite">
+      <div className="weather-card-heading"><div><span className="eyebrow">SHANGHAI WEATHER</span><h2>上海天氣</h2></div><CloudSun size={22} /></div>
+      {weather ? <WeatherSummary weather={weather} targetDate={targetDate} targetForecast={targetForecast} showForecast={showForecast} offline={offline} /> : loading ? <div className="weather-loading"><span className="weather-loading-dot" />正在取得上海天氣…</div> : <div className="weather-unavailable">目前無法取得天氣，請稍後重新整理。</div>}
+      {weather && <div className="weather-footer">{offline ? "離線顯示最近一次資料" : `更新於 ${formatWeatherUpdatedAt(weather.fetchedAt)}`}<span>資料來源：Open-Meteo</span></div>}
+    </section>
+  );
+}
+
+function WeatherSummary({ weather, targetDate, targetForecast, showForecast, offline }: { weather: WeatherSnapshot; targetDate: string; targetForecast?: WeatherDay; showForecast: boolean; offline: boolean }) {
+  const currentDescription = describeWeatherCode(weather.current.weatherCode);
+  const dailyDescription = targetForecast ? describeWeatherCode(targetForecast.weatherCode) : currentDescription;
+  const description = showForecast ? dailyDescription : currentDescription;
+  const dailyToday = weather.daily.find((day) => day.date === weather.current.time.slice(0, 10));
+  const high = showForecast ? targetForecast?.highC : dailyToday?.highC;
+  const low = showForecast ? targetForecast?.lowC : dailyToday?.lowC;
+  const precipitation = showForecast ? targetForecast?.precipitationProbability : dailyToday?.precipitationProbability;
+  const scope = showForecast ? `${formatMonthDay(targetDate)} 行程預報` : "目前上海";
+  const forecastNote = !showForecast && !targetForecast ? `${formatMonthDay(targetDate)} 尚未進入可預報範圍` : undefined;
+
+  return <div className="weather-summary"><div className="weather-main"><span className="weather-symbol" aria-hidden="true">{description.symbol}</span><div className="weather-condition"><strong>{description.label}</strong><span>{scope}</span></div><strong className="weather-temperature">{showForecast && targetForecast ? `${formatWeatherTemperature(targetForecast.highC)} / ${formatWeatherTemperature(targetForecast.lowC)}` : formatWeatherTemperature(weather.current.temperatureC)}</strong></div><div className="weather-facts"><span><Droplets size={14} />降雨 {precipitation === undefined ? "—" : `${Math.round(precipitation)}%`}</span><span><Wind size={14} />風速 {Math.round(weather.current.windSpeedKmh)} km/h</span><span>{showForecast ? "高／低溫" : `體感 ${formatWeatherTemperature(weather.current.apparentTemperatureC)}`}{high !== undefined && low !== undefined && !showForecast ? ` · ${formatWeatherTemperature(high)} / ${formatWeatherTemperature(low)}` : ""}</span></div>{forecastNote && <p className="weather-note">{forecastNote}，先顯示上海目前天氣。</p>}{offline && <p className="weather-note">目前使用本機最近一次成功載入的天氣資料。</p>}</div>;
+}
+
+function formatWeatherUpdatedAt(iso: string): string {
+  return new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
 }
 
 function PreTripPreparationCard({
