@@ -33,6 +33,19 @@ export function formatDate(dateString: string): string {
   }).format(new Date(`${dateString}T12:00:00`));
 }
 
+export function formatMonthDay(dateString: string): string {
+  return new Intl.DateTimeFormat("zh-TW", {
+    month: "numeric",
+    day: "numeric"
+  }).format(new Date(`${dateString}T12:00:00`));
+}
+
+export function formatWeekday(dateString: string): string {
+  return new Intl.DateTimeFormat("zh-TW", {
+    weekday: "short"
+  }).format(new Date(`${dateString}T12:00:00`));
+}
+
 export function formatDateTime(iso?: string): string {
   if (!iso) return "尚未發布";
   return new Intl.DateTimeFormat("zh-TW", {
@@ -221,4 +234,3 @@ export function normalizeTrip(value: TripDocument): TripDocument {
     versions: Array.isArray(value.versions) ? clone(value.versions) : []
   };
 }
-

@@ -777,14 +777,14 @@ button:disabled {
 }
 
 .day-tabs {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
   gap: 8px;
 }
 
 .day-tabs button {
   display: grid;
   gap: 4px;
+  flex: 1 1 0;
   min-width: 0;
   padding: 12px 8px;
   border: 1px solid var(--line);
@@ -796,11 +796,17 @@ button:disabled {
 }
 
 .day-tabs button small {
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   font-size: 10px;
   font-weight: 600;
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.day-tab-weekday {
+  flex: 0 0 auto;
 }
 
 .day-tabs button.is-selected {

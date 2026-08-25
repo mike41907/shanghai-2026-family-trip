@@ -48,7 +48,9 @@ import {
   formatDate,
   formatDateTime,
   formatDistanceUntil,
+  formatMonthDay,
   formatTimeRange,
+  formatWeekday,
   getDateKey,
   getDayProgress,
   getItemDate,
@@ -650,8 +652,8 @@ function SchedulePage({
       <PageIntro eyebrow="ITINERARY" title="五日行程" description="按天查看時間軸，下一步與交通方式一眼就懂。" />
       <div className="day-tabs" role="tablist" aria-label="選擇行程日">
         {trip.days.map((day) => (
-          <button key={day.id} className={day.dayNumber === selectedDay.dayNumber ? "is-selected" : ""} onClick={() => onSelectDay(day.dayNumber)} role="tab" aria-selected={day.dayNumber === selectedDay.dayNumber}>
-            <span>Day {day.dayNumber}</span><small>{formatDate(day.date).split(" ")[0]}</small>
+          <button key={day.id} className={day.dayNumber === selectedDay.dayNumber ? "is-selected" : ""} onClick={() => onSelectDay(day.dayNumber)} role="tab" aria-selected={day.dayNumber === selectedDay.dayNumber} aria-label={`Day ${day.dayNumber} ${formatMonthDay(day.date)} ${formatWeekday(day.date)}`}>
+            <span>Day {day.dayNumber}</span><small><span>{formatMonthDay(day.date)}</span><span className="day-tab-weekday">{formatWeekday(day.date)}</span></small>
           </button>
         ))}
       </div>
