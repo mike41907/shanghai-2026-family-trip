@@ -434,7 +434,7 @@ export const INITIAL_TRIP: TripDocument = {
           category: "活動",
           address: "上海市虹口區東大名路999號，北外灘來福士 3 樓"
         }),
-        item("d4-makeup", "16:00", "吳庭樺妝髮", {
+        item("d4-makeup", "16:00", "妝髮準備", {
           category: "活動",
           address: "北外灘來福士 3 樓，水星中庭 01-02"
         }),
@@ -546,7 +546,7 @@ export const INITIAL_TRIP: TripDocument = {
         route: "上海浦東出發 → 桃園"
       }
     ],
-    members: ["施富凱", "吳庭樺", "徐翠戀", "徐黃金忩"],
+    members: [],
     maglevStation: "龍陽路磁浮站",
     airport: "上海浦東國際機場"
   },
