@@ -59,6 +59,7 @@ export interface TripInfo {
   hotel: {
     name: string;
     address: string;
+    phone?: string;
   };
   flights: TripFlight[];
   members: string[];

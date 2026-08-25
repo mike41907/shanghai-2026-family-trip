@@ -1217,6 +1217,18 @@ button:disabled {
   line-height: 1.55;
 }
 
+.info-card-content > .contact-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contact-line a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .info-card-content > .amap-button {
   margin-top: 13px;
 }

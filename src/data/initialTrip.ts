@@ -527,7 +527,8 @@ export const INITIAL_TRIP: TripDocument = {
   info: {
     hotel: {
       name: "上海外灘璞硯酒店",
-      address: "上海市黃浦區北京東路398號"
+      address: "上海市黃浦區北京東路398號",
+      phone: "+86-21-63522888"
     },
     flights: [
       {
