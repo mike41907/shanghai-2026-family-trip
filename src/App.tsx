@@ -608,6 +608,10 @@ function App() {
           onImport={() => importInputRef.current?.click()}
           onRestoreBackup={handleRestoreBackup}
           onRestoreVersion={handleRestoreVersion}
+          onAddTask={() => setEditingTask(null)}
+          onEditTask={setEditingTask}
+          onDeleteTask={deleteTask}
+          onToggleTask={toggleTask}
           onExitManager={() => {
             setManagerOpen(false);
             setManagerMode(false);
@@ -1274,6 +1278,10 @@ function ManagerDrawer({
   onImport,
   onRestoreBackup,
   onRestoreVersion,
+  onAddTask,
+  onEditTask,
+  onDeleteTask,
+  onToggleTask,
   onExitManager
 }: {
   trip: TripDocument;
@@ -1288,10 +1296,14 @@ function ManagerDrawer({
   onImport: () => void;
   onRestoreBackup: () => void;
   onRestoreVersion: (version: TripVersion) => void;
+  onAddTask: () => void;
+  onEditTask: (task: TripTask) => void;
+  onDeleteTask: (taskId: string) => void;
+  onToggleTask: (taskId: string) => void;
   onExitManager: () => void;
 }) {
   const [note, setNote] = useState("管理者發布最新版");
-  return <div className="drawer-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="manager-drawer" role="dialog" aria-modal="true" aria-label="管理工具"><div className="drawer-header"><div><span className="eyebrow">LOCAL ADMIN</span><h2>管理工具</h2></div><button className="icon-button" onClick={onClose} aria-label="關閉管理工具"><X size={20} /></button></div><div className="drawer-scroll"><section className={`publish-status ${isDirty ? "is-dirty" : ""}`}><div className="publish-status-icon">{isDirty ? <CloudUpload size={21} /> : <CircleCheck size={21} />}</div><div><strong>{isDirty ? "尚未發布" : "已是最新發布版本"}</strong><span>{isDirty ? "家人仍只會看到已發布版本" : `目前 ${published.versions[published.versions.length - 1]?.label ?? "V1.0"}`}</span></div></section><div className="publish-form"><label htmlFor="version-note">發布備註</label><input id="version-note" value={note} onChange={(event) => setNote(event.target.value)} /><button className="primary-button full-button" disabled={!isDirty} onClick={() => onPublish(note)}><CloudUpload size={17} />發布最新版並下載 trip.json</button><p className="helper-text">下載後請將檔案覆蓋 GitHub 專案的 <code>public/trip.json</code>，再提交部署；前端不保存 Token。</p></div><div className="drawer-actions"><button className="secondary-button" onClick={onDownloadDraft}><Download size={16} />下載草稿</button><button className="secondary-button" onClick={onBackup}><Download size={16} />下載備份</button><button className="secondary-button" onClick={onImport}><Upload size={16} />匯入 JSON</button><button className="secondary-button" onClick={onRestoreBackup}><RotateCcw size={16} />還原備份</button></div>{lastBackupAt && <p className="last-action"><Save size={14} />上次備份：{formatDateTime(lastBackupAt)}</p>}<section className="version-section"><div className="section-heading"><div><span className="eyebrow">HISTORY</span><h3>版本紀錄</h3></div><History size={18} /></div><div className="version-list">{[...trip.versions].reverse().map((version) => <div className="version-row" key={version.id}><div><strong>{version.label}</strong><span>{formatDateTime(version.createdAt)}</span><small>{version.note}</small></div><button className="text-action" onClick={() => onRestoreVersion(version)}><RotateCcw size={14} />還原草稿</button></div>)}</div></section><section className="sync-note"><Info size={16} /><p>目前是單一管理者＋家人唯讀模式。草稿只在這台裝置保存；發布檔案要更新 GitHub Pages，家人才會在其他手機看到最新版。</p>{lastRemoteSyncAt && <small>最近載入發布版本：{formatDateTime(lastRemoteSyncAt)}</small>}</section></div><div className="drawer-footer"><button className="quiet-button" onClick={onExitManager}><LockKeyholeIcon />退出管理模式</button></div></aside></div>;
+   return <div className="drawer-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="manager-drawer" role="dialog" aria-modal="true" aria-label="管理工具"><div className="drawer-header"><div><span className="eyebrow">LOCAL ADMIN</span><h2>管理工具</h2></div><button className="icon-button" onClick={onClose} aria-label="關閉管理工具"><X size={20} /></button></div><div className="drawer-scroll"><section className={`publish-status ${isDirty ? "is-dirty" : ""}`}><div className="publish-status-icon">{isDirty ? <CloudUpload size={21} /> : <CircleCheck size={21} />}</div><div><strong>{isDirty ? "尚未發布" : "已是最新發布版本"}</strong><span>{isDirty ? "家人仍只會看到已發布版本" : `目前 ${published.versions[published.versions.length - 1]?.label ?? "V1.0"}`}</span></div></section><div className="publish-form"><label htmlFor="version-note">發布備註</label><input id="version-note" value={note} onChange={(event) => setNote(event.target.value)} /><button className="primary-button full-button" disabled={!isDirty} onClick={() => onPublish(note)}><CloudUpload size={17} />發布最新版並下載 trip.json</button><p className="helper-text">下載後請將檔案覆蓋 GitHub 專案的 <code>public/trip.json</code>，再提交部署；前端不保存 Token。</p></div><div className="drawer-actions"><button className="secondary-button" onClick={onDownloadDraft}><Download size={16} />下載草稿</button><button className="secondary-button" onClick={onBackup}><Download size={16} />下載備份</button><button className="secondary-button" onClick={onImport}><Upload size={16} />匯入 JSON</button><button className="secondary-button" onClick={onRestoreBackup}><RotateCcw size={16} />還原備份</button></div><section className="drawer-task-section"><div className="drawer-section-label"><ClipboardCheck size={16} />行前準備編輯</div><TaskChecklist tasks={trip.tasks} managerMode onAdd={onAddTask} onEdit={onEditTask} onDelete={onDeleteTask} onToggle={onToggleTask} /></section>{lastBackupAt && <p className="last-action"><Save size={14} />上次備份：{formatDateTime(lastBackupAt)}</p>}<section className="version-section"><div className="section-heading"><div><span className="eyebrow">HISTORY</span><h3>版本紀錄</h3></div><History size={18} /></div><div className="version-list">{[...trip.versions].reverse().map((version) => <div className="version-row" key={version.id}><div><strong>{version.label}</strong><span>{formatDateTime(version.createdAt)}</span><small>{version.note}</small></div><button className="text-action" onClick={() => onRestoreVersion(version)}><RotateCcw size={14} />還原草稿</button></div>)}</div></section><section className="sync-note"><Info size={16} /><p>目前是單一管理者＋家人唯讀模式。草稿只在這台裝置保存；發布檔案要更新 GitHub Pages，家人才會在其他手機看到最新版。</p>{lastRemoteSyncAt && <small>最近載入發布版本：{formatDateTime(lastRemoteSyncAt)}</small>}</section></div><div className="drawer-footer"><button className="quiet-button" onClick={onExitManager}><LockKeyholeIcon />退出管理模式</button></div></aside></div>;
 }
 
 function LockKeyholeIcon() {
