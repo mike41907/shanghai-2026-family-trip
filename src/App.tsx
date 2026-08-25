@@ -229,6 +229,13 @@ function App() {
   const visibleTrip = managerMode ? appState?.draft : appState?.published;
   const selectedDayData = visibleTrip?.days.find((day) => day.dayNumber === selectedDay) ?? visibleTrip?.days[0];
 
+  const openExpenseTools = () => {
+    setActivePage("trip");
+    window.setTimeout(() => {
+      document.getElementById("private-travel-tools")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
+
   const handlePublish = (note: string) => {
     if (!appState) return;
     const published = repository.publish(appState.draft, note || "管理者發布最新版");
@@ -656,6 +663,14 @@ function App() {
       </main>
 
       <BottomNavigation activePage={activePage} onNavigate={setActivePage} />
+
+      {managerMode && travelTools && (
+        <button className="manager-expense-fab" onClick={openExpenseTools} aria-label="開啟費用記帳">
+          <WalletCards size={19} />
+          <span>記帳</span>
+          <small>拍照／新增</small>
+        </button>
+      )}
 
       {managerOpen && (
         <ManagerDrawer
@@ -1353,7 +1368,7 @@ function PrivateTravelTools({
 }) {
   const summary = summarizeExpenses(tools.expenses);
   return (
-    <section className="private-tools-section">
+    <section id="private-travel-tools" className="private-tools-section">
       <div className="section-heading"><div><span className="eyebrow">LOCAL ONLY</span><h2>旅行工具</h2><p className="section-description">費用與票券只保存在這台管理裝置，不會寫入公開行程。</p></div><WalletCards size={21} /></div>
       <div className="private-tools-grid">
         <section className="tool-card private-tool-card">

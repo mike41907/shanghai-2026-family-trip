@@ -1482,6 +1482,38 @@ button:disabled {
   background: var(--surface-tint);
 }
 
+.manager-expense-fab {
+  position: fixed;
+  right: max(16px, calc((100vw - 980px) / 2));
+  bottom: calc(var(--nav-height) + 14px + env(safe-area-inset-bottom));
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--brand) 80%, transparent);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--brand);
+  box-shadow: 0 9px 22px rgba(23, 59, 75, 0.25);
+  font-size: 14px;
+  font-weight: 850;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.manager-expense-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(23, 59, 75, 0.3);
+}
+
+.manager-expense-fab small {
+  padding-left: 2px;
+  color: color-mix(in srgb, #fff 78%, transparent);
+  font-size: 10px;
+  font-weight: 650;
+}
+
 .drawer-backdrop,
 .modal-backdrop {
   position: fixed;
@@ -2041,6 +2073,14 @@ code {
   .manager-strip-actions .quiet-button {
     flex: 1;
     justify-content: center;
+  }
+
+  .manager-expense-fab {
+    right: 12px;
+  }
+
+  .manager-expense-fab small {
+    display: none;
   }
 
   .page-content {
@@ -2666,6 +2706,7 @@ code {
 .private-tools-section {
   display: grid;
   gap: 14px;
+  scroll-margin-top: 90px;
 }
 
 .private-tools-section > .section-heading {
