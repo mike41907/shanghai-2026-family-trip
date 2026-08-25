@@ -66,6 +66,16 @@ const restaurants: Restaurant[] = [
     notes: "Day 5 正式安排的本幫菜。"
   },
   {
+    id: "restaurant-yuanyuan-xingguo",
+    name: "圓苑（興國路店）",
+    category: "本幫菜",
+    address: "上海市徐匯區興國路201號（近泰安路）",
+    phone: "+86-21-64339123",
+    area: "徐匯／衡復",
+    businessHours: "11:00–21:30",
+    notes: "Day 2 午餐正式安排。"
+  },
+  {
     id: "restaurant-yuxingji",
     name: "裕興記",
     category: "麵食",
@@ -239,8 +249,8 @@ export const INITIAL_TRIP: TripDocument = {
     day(
       2,
       "2026-09-15",
-      "飯店早餐・武康大樓・City Walk・羊肉串・豫園夜景",
-      "從武康大樓走進衡復街區，下午留白休息，晚上吃羊肉串再看豫園夜景。",
+      "飯店早餐・武康大樓・圓苑・City Walk・羊肉串・豫園夜景",
+      "武康大樓後步行前往圓苑用餐，再接續衡復街區散步，下午留白休息，晚上吃羊肉串看豫園夜景。",
       [
         item("d2-breakfast", "08:00", "飯店早餐", {
           endTime: "09:00",
@@ -260,12 +270,28 @@ export const INITIAL_TRIP: TripDocument = {
           businessHours: "建築外觀全天可看",
           duration: "約 45 分鐘"
         }),
-        item("d2-citywalk", "10:15", "衡復 City Walk", {
+        item("d2-walk-yuanyuan", "10:15", "步行前往圓苑（興國路店）", {
+          endTime: "10:35",
+          category: "交通",
+          transportMode: "walk",
+          transportNote: "武康大樓 → 圓苑（興國路店），步行約 15–20 分鐘。",
+          duration: "約 15–20 分鐘"
+        }),
+        item("d2-yuanyuan", "11:00", "圓苑（興國路店）", {
+          endTime: "12:30",
+          category: "午餐",
+          address: "上海市徐匯區興國路201號（近泰安路）",
+          phone: "+86-21-64339123",
+          businessHours: "11:00–21:30",
+          duration: "約 90 分鐘",
+          sourceRestaurantId: "restaurant-yuanyuan-xingguo"
+        }),
+        item("d2-citywalk", "12:30", "衡復 City Walk", {
           endTime: "14:30",
           category: "散步",
           address: "上海市徐匯區衡復風貌區",
-          duration: "約 4 小時 15 分鐘",
-          notes: "路線：武康大樓 → 巨鹿路 → 富民路 → 長樂路 → 東湖路 → 延慶路。中間安排午餐、咖啡、休息。"
+          duration: "約 2 小時",
+          notes: "午餐後路線：圓苑（興國路店）→ 巨鹿路 → 富民路 → 長樂路 → 東湖路 → 延慶路；中間安排咖啡、休息。"
         }),
         item("d2-free", "14:30", "自由活動／休息", {
           endTime: "16:45",
@@ -302,9 +328,10 @@ export const INITIAL_TRIP: TripDocument = {
       ],
       [
         segment("d2-t1", "上海外灘璞硯酒店", "武康大樓", "taxi", "滴滴", "依路況"),
-        segment("d2-t2", "武康大樓", "衡復 City Walk", "walk", "步行串聯街區", "依體力"),
-        segment("d2-t3", "陝西南路店", "豫園商城", "taxi", "滴滴", "依路況"),
-        segment("d2-t4", "豫園商城", "上海外灘璞硯酒店", "taxi", "滴滴", "依路況")
+        segment("d2-t2", "武康大樓", "圓苑（興國路店）", "walk", "步行前往圓苑", "約 15–20 分鐘"),
+        segment("d2-t3", "圓苑（興國路店）", "衡復 City Walk", "walk", "步行銜接街區", "依體力"),
+        segment("d2-t4", "陝西南路店", "豫園商城", "taxi", "滴滴", "依路況"),
+        segment("d2-t5", "豫園商城", "上海外灘璞硯酒店", "taxi", "滴滴", "依路況")
       ]
     ),
     day(
