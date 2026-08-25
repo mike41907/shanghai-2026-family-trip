@@ -2152,3 +2152,342 @@ code {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Local travel tools */
+.tool-card,
+.private-tools-section .tool-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.tool-card {
+  padding: 19px;
+}
+
+.tool-card-header,
+.tool-card-title,
+.tool-header-actions,
+.task-row,
+.expense-row,
+.attachment-row,
+.attachment-preview {
+  display: flex;
+  align-items: center;
+}
+
+.tool-card-header {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tool-card-title {
+  min-width: 0;
+  gap: 11px;
+}
+
+.tool-card-title > div:last-child {
+  min-width: 0;
+}
+
+.tool-card-title h2,
+.tool-card-title h3 {
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: 21px;
+  letter-spacing: -0.045em;
+}
+
+.tool-card-title h3 {
+  font-size: 18px;
+}
+
+.tool-card-title p,
+.section-description {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.task-icon {
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.expense-icon {
+  color: #9b7335;
+  background: var(--accent-soft);
+}
+
+.attachment-icon {
+  color: #65739b;
+  background: #eef0fa;
+}
+
+.task-list,
+.expense-list,
+.attachment-list {
+  display: grid;
+  margin-top: 15px;
+}
+
+.task-row {
+  min-width: 0;
+  gap: 10px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+
+.task-check {
+  display: grid;
+  flex: 0 0 auto;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  color: #fff;
+  background: var(--surface-soft);
+}
+
+.task-check:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.task-row.is-complete .task-check {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.task-copy,
+.expense-copy,
+.attachment-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.task-copy strong,
+.expense-copy strong,
+.attachment-copy strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-row.is-complete .task-copy strong {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.task-copy span,
+.expense-copy span,
+.expense-copy small,
+.attachment-copy span,
+.attachment-copy small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-copy small,
+.attachment-copy small {
+  color: var(--ink-soft);
+}
+
+.tool-note {
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.tool-empty {
+  margin: 0;
+  padding: 17px 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.private-tools-section {
+  display: grid;
+  gap: 14px;
+}
+
+.private-tools-section > .section-heading {
+  align-items: flex-start;
+}
+
+.private-tools-section > .section-heading > svg {
+  color: var(--accent);
+}
+
+.private-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.private-tool-card {
+  min-width: 0;
+}
+
+.tool-header-actions {
+  flex: 0 0 auto;
+  gap: 7px;
+}
+
+.tool-header-actions .small-icon-button {
+  width: 34px;
+  height: 34px;
+}
+
+.expense-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 17px;
+  padding: 13px;
+  border-radius: 13px;
+  background: var(--surface-soft);
+}
+
+.expense-total strong {
+  color: var(--ink);
+  font-size: 25px;
+  letter-spacing: -0.05em;
+}
+
+.expense-total span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.expense-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.expense-breakdown span {
+  padding: 5px 7px;
+  border-radius: 8px;
+  color: var(--ink-soft);
+  background: var(--surface-tint);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.expense-row,
+.attachment-row {
+  min-width: 0;
+  gap: 9px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+
+.expense-amount {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.expense-row .item-admin-actions,
+.attachment-row .item-admin-actions {
+  flex: 0 0 auto;
+}
+
+.attachment-icon-box {
+  display: grid;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--brand);
+  background: var(--surface-tint);
+}
+
+.attachment-preview {
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  color: var(--brand);
+  background: var(--surface-tint);
+}
+
+.attachment-preview > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.attachment-preview strong,
+.attachment-preview span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-preview strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.attachment-preview span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+@media (max-width: 760px) {
+  .private-tools-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 540px) {
+  .tool-card {
+    border-radius: 19px;
+    padding: 16px;
+  }
+
+  .tool-card-header {
+    align-items: flex-start;
+  }
+
+  .tool-card-header > .secondary-button,
+  .tool-header-actions .secondary-button {
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  .task-row .item-admin-actions,
+  .expense-row .item-admin-actions,
+  .attachment-row .item-admin-actions {
+    gap: 4px;
+  }
+
+  .expense-row,
+  .attachment-row {
+    align-items: flex-start;
+  }
+
+  .expense-amount {
+    font-size: 12px;
+  }
+}

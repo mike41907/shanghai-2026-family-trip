@@ -1,3 +1,4 @@
+import { DEFAULT_TRIP_TASKS } from "../types";
 import type { ItineraryItem, TripDay, TripDocument, TripSnapshot } from "../types";
 
 export function clone<T>(value: T): T {
@@ -226,6 +227,7 @@ export function isTripDocument(value: unknown): value is TripDocument {
 export function normalizeTrip(value: TripDocument): TripDocument {
   return {
     ...clone(value),
+    tasks: Array.isArray(value.tasks) ? clone(value.tasks) : DEFAULT_TRIP_TASKS.map((task) => ({ ...task })),
     versions: Array.isArray(value.versions) ? clone(value.versions) : []
   };
 }

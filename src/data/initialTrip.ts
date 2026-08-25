@@ -3,7 +3,8 @@ import type {
   Restaurant,
   TransitSegment,
   TripDay,
-  TripDocument
+  TripDocument,
+  TripTask
 } from "../types";
 
 const item = (
@@ -21,6 +22,15 @@ const segment = (
   detail?: string,
   duration?: string
 ): TransitSegment => ({ id, from, to, mode, detail, duration });
+
+const tasks: TripTask[] = [
+  { id: "task-passport", title: "確認護照與台胞證", category: "證件", completed: false },
+  { id: "task-sim", title: "準備網卡／中國門號", category: "網路", completed: false },
+  { id: "task-charger", title: "準備充電器、轉接頭與行動電源", category: "行李", completed: false },
+  { id: "task-medicine", title: "準備常備藥品", category: "行李", completed: false },
+  { id: "task-tickets", title: "確認機票、訂位與付款資料", category: "行程", completed: false },
+  { id: "task-checkout", title: "退房、確認房間並取回行李", category: "返程", completed: false }
+];
 
 const day = (
   dayNumber: number,
@@ -551,6 +561,7 @@ export const INITIAL_TRIP: TripDocument = {
     )
   ],
   restaurants,
+  tasks,
   info: {
     hotel: {
       name: "上海外灘璞硯酒店",

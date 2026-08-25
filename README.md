@@ -9,11 +9,16 @@
 - 交通卡：步行、地鐵、滴滴、磁浮、飛機等交通段落。
 - 想吃：備選餐廳、分類／區域／營業時間、加入 Day 與時間、美團搜尋與店名複製。
 - 旅程：飯店、航班、成員、飯店／機場／磁浮站快速導航。
+- 家庭任務清單：護照、台胞證、網卡、充電器、藥品、退房等，可由管理者編輯、勾選並隨發布版本同步給家人。
+- 費用記帳：本機記錄人民幣金額、付款人、分類與備註，可匯出 JSON 與 CSV 統計。
+- 票券與截圖附件：機票、訂位與付款 QR Code 以 IndexedDB 保存在管理者裝置，不會寫入 `public/trip.json` 或上傳 GitHub。
 - 管理模式：新增、編輯、刪除、複製、時間調整、拖曳排序、標記完成、編輯交通與備註。
 - 草稿與發布分離：家人永遠只讀 `public/trip.json` 的發布版本。
 - 版本歷史：每次發布建立 V1.0、V1.1…，可將任一版本還原到草稿。
 - JSON：下載草稿、完整備份、匯入 JSON、還原本機最近備份。
 - PWA：manifest、Service Worker、最近發布資料離線快取、深色／淺色模式、手機主畫面模式。
+
+旅行工具中的費用與附件是管理者本機資料；清除網站資料或更換裝置前，請先匯出旅費並下載重要附件。任務清單則屬於正式行程資料，發布後家人可以唯讀查看。
 
 ## 本機開發
 
@@ -62,7 +67,7 @@ VITE_BASE_PATH=/my-repo/ npm run build
 - `public/trip.json`：GitHub Pages 對外公開的發布版本。
 - `TripVersion.snapshot`：版本歷史的完整行程快照，不會把尚未發布的草稿曝光給家人。
 
-高德導航會在行動裝置先嘗試 `amapuri://` scheme，沒有 App 或桌面環境則開啟 `https://uri.amap.com/`；美團同樣先嘗試 deep link，並在卡片提供一鍵複製餐廳名稱的 fallback。沒有串接任何付費 API、雲端 API、遙測或 Token。
+高德導航使用官方 `https://uri.amap.com/search` URI；行動裝置會帶入原生 App 呼叫參數，無法開啟時回到網頁搜尋，避免舊版私有 scheme 觸發不支援功能提示。美團同樣先嘗試 deep link，並在卡片提供一鍵複製餐廳名稱的 fallback。沒有串接任何付費 API、雲端 API、遙測或 Token。
 
 ## 驗證清單
 
@@ -79,8 +84,11 @@ npm run build
 3. 開啟管理模式，編輯一個行程、拖曳排序、標記完成、加入備選餐廳。
 4. 確認草稿修改不會出現在唯讀發布畫面。
 5. 發布並下載 `trip.json`，匯出備份，再匯入／還原備份。
-6. 在 DevTools Application 檢查 manifest、Service Worker 與離線載入。
-7. 在手機測試高德 App；沒有高德 App 時確認網頁 fallback。
+6. 在旅程頁測試家庭任務新增、勾選、發布與家人唯讀畫面。
+7. 在管理模式新增旅費，確認總額、付款人統計、JSON／CSV 匯出。
+8. 上傳圖片或 PDF 票券，重新整理後下載附件，確認附件未出現在 `public/trip.json`。
+9. 在 DevTools Application 檢查 manifest、Service Worker、IndexedDB 與離線載入。
+10. 在手機測試高德 App；沒有高德 App 時確認網頁 fallback。
 
 ## 原始資料來源
 

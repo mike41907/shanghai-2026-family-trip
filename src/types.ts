@@ -48,6 +48,26 @@ export interface Restaurant {
   notes?: string;
 }
 
+export type TripTaskCategory = "證件" | "網路" | "行李" | "行程" | "返程" | "其他";
+
+export interface TripTask {
+  id: string;
+  title: string;
+  category: TripTaskCategory;
+  completed: boolean;
+  assignee?: string;
+  notes?: string;
+}
+
+export const DEFAULT_TRIP_TASKS: TripTask[] = [
+  { id: "task-passport", title: "確認護照與台胞證", category: "證件", completed: false },
+  { id: "task-sim", title: "準備網卡／中國門號", category: "網路", completed: false },
+  { id: "task-charger", title: "準備充電器、轉接頭與行動電源", category: "行李", completed: false },
+  { id: "task-medicine", title: "準備常備藥品", category: "行李", completed: false },
+  { id: "task-tickets", title: "確認機票、訂位與付款資料", category: "行程", completed: false },
+  { id: "task-checkout", title: "退房、確認房間並取回行李", category: "返程", completed: false }
+];
+
 export interface TripFlight {
   id: string;
   label: string;
@@ -77,6 +97,7 @@ export interface TripSnapshot {
   endDate: string;
   days: TripDay[];
   restaurants: Restaurant[];
+  tasks: TripTask[];
   info: TripInfo;
   publishedAt?: string;
 }

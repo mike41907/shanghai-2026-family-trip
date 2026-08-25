@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   Check,
+  ClipboardCheck,
   ChevronDown,
   ChevronRight,
   CircleAlert,
@@ -12,6 +13,7 @@ import {
   Download,
   ExternalLink,
   FileJson,
+  FileText,
   GripVertical,
   History,
   Hotel,
@@ -22,6 +24,7 @@ import {
   Moon,
   Navigation,
   Pencil,
+  Paperclip,
   Plane,
   PhoneCall,
   Plus,
@@ -36,12 +39,24 @@ import {
   Upload,
   Utensils,
   Users,
+  WalletCards,
   X
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { LocalTripRepository, withInitialVersion } from "./lib/repository";
+import {
+  expensesToCsv,
+  formatFileSize,
+  LocalTravelToolsRepository,
+  summarizeExpenses,
+  type AttachmentCategory,
+  type AttachmentMeta,
+  type ExpenseCategory,
+  type ExpenseRecord,
+  type TravelToolsData
+} from "./lib/travelTools";
 import {
   clone,
   copyText,
@@ -75,6 +90,8 @@ import {
   type TripDay,
   type TripDocument,
   type TripInfo,
+  type TripTask,
+  type TripTaskCategory,
   type TripVersion
 } from "./types";
 import "./styles.css";
@@ -98,7 +115,9 @@ const NAV_ITEMS: Array<{ id: Page; label: string; icon: LucideIcon }> = [
 
 function App() {
   const repository = useMemo(() => new LocalTripRepository(), []);
+  const travelToolsRepository = useMemo(() => new LocalTravelToolsRepository(), []);
   const [appState, setAppState] = useState<RepositoryState | null>(null);
+  const [travelTools, setTravelTools] = useState<TravelToolsData | null>(null);
   const [activePage, setActivePage] = useState<Page>("today");
   const [selectedDay, setSelectedDay] = useState(1);
   const [managerMode, setManagerMode] = useState(false);
@@ -118,8 +137,12 @@ function App() {
   const [addingRestaurant, setAddingRestaurant] = useState<Restaurant | null>(null);
   const [editingRestaurant, setEditingRestaurant] = useState<Restaurant | null | undefined>(undefined);
   const [editingInfo, setEditingInfo] = useState(false);
+  const [editingTask, setEditingTask] = useState<TripTask | null | undefined>(undefined);
+  const [editingExpense, setEditingExpense] = useState<ExpenseRecord | null | undefined>(undefined);
+  const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
   const [viewingTrafficDay, setViewingTrafficDay] = useState<TripDay | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -132,6 +155,16 @@ function App() {
       active = false;
     };
   }, [repository]);
+
+  useEffect(() => {
+    let active = true;
+    travelToolsRepository.load().then((loaded) => {
+      if (active) setTravelTools(loaded);
+    });
+    return () => {
+      active = false;
+    };
+  }, [travelToolsRepository]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -357,6 +390,117 @@ function App() {
     showToast("旅程資料已更新到草稿。", "success");
   };
 
+  const saveTask = (task: TripTask) => {
+    updateDraft((draft) => ({
+      ...draft,
+      tasks: draft.tasks.some((candidate) => candidate.id === task.id)
+        ? draft.tasks.map((candidate) => candidate.id === task.id ? task : candidate)
+        : [...draft.tasks, task]
+    }));
+    setEditingTask(undefined);
+    showToast("家庭任務已更新到草稿。", "success");
+  };
+
+  const toggleTask = (taskId: string) => {
+    updateDraft((draft) => ({
+      ...draft,
+      tasks: draft.tasks.map((task) => task.id === taskId ? { ...task, completed: !task.completed } : task)
+    }));
+  };
+
+  const deleteTask = (taskId: string) => {
+    if (!window.confirm("確定刪除這項家庭任務？刪除只會影響尚未發布的草稿。")) return;
+    updateDraft((draft) => ({ ...draft, tasks: draft.tasks.filter((task) => task.id !== taskId) }));
+    showToast("家庭任務已刪除。", "success");
+  };
+
+  const saveExpense = (expense: ExpenseRecord) => {
+    if (!travelTools) return;
+    const expenses = travelTools.expenses.some((candidate) => candidate.id === expense.id)
+      ? travelTools.expenses.map((candidate) => candidate.id === expense.id ? expense : candidate)
+      : [...travelTools.expenses, expense];
+    travelToolsRepository.saveExpenses(expenses);
+    setTravelTools({ ...travelTools, expenses });
+    setEditingExpense(undefined);
+    showToast("旅費已保存在本機。", "success");
+  };
+
+  const deleteExpense = (expenseId: string) => {
+    if (!travelTools || !window.confirm("確定刪除這筆旅費？")) return;
+    const expenses = travelTools.expenses.filter((expense) => expense.id !== expenseId);
+    travelToolsRepository.saveExpenses(expenses);
+    setTravelTools({ ...travelTools, expenses });
+    showToast("旅費已刪除。", "success");
+  };
+
+  const exportExpenses = () => {
+    if (!travelTools) return;
+    const summary = summarizeExpenses(travelTools.expenses);
+    downloadJson("shanghai-2026-expenses.json", {
+      kind: "family-trip-expenses",
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      summary,
+      expenses: travelTools.expenses
+    });
+    const csvBlob = new Blob([expensesToCsv(travelTools.expenses)], { type: "text/csv;charset=utf-8" });
+    const csvUrl = URL.createObjectURL(csvBlob);
+    const anchor = document.createElement("a");
+    anchor.href = csvUrl;
+    anchor.download = "shanghai-2026-expenses.csv";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(csvUrl);
+    showToast("已下載旅費 JSON 與 CSV 統計。", "success");
+  };
+
+  const handleAttachmentFile = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) setPendingAttachment(file);
+  };
+
+  const saveAttachment = async (category: AttachmentCategory, note: string) => {
+    if (!pendingAttachment || !travelTools) return;
+    try {
+      const metadata = await travelToolsRepository.addAttachment(pendingAttachment, { category, note });
+      setTravelTools({ ...travelTools, attachments: [metadata, ...travelTools.attachments] });
+      setPendingAttachment(null);
+      showToast("附件已保存在本機，不會上傳到公開行程。", "success");
+    } catch {
+      showToast("附件無法保存，請確認瀏覽器允許本機儲存。", "error");
+    }
+  };
+
+  const downloadAttachment = async (attachment: AttachmentMeta) => {
+    try {
+      const stored = await travelToolsRepository.getAttachment(attachment.id);
+      if (!stored) throw new Error("missing");
+      const url = URL.createObjectURL(stored.blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = attachment.name;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      showToast("附件無法讀取，可能已被清除。", "error");
+    }
+  };
+
+  const deleteAttachment = async (attachment: AttachmentMeta) => {
+    if (!travelTools || !window.confirm(`刪除「${attachment.name}」？`)) return;
+    try {
+      await travelToolsRepository.deleteAttachment(attachment.id);
+      setTravelTools({ ...travelTools, attachments: travelTools.attachments.filter((item) => item.id !== attachment.id) });
+      showToast("附件已從本機移除。", "success");
+    } catch {
+      showToast("附件刪除失敗。", "error");
+    }
+  };
+
   if (loadingError) return <div className="fatal-state"><CircleAlert size={24} />{loadingError}</div>;
   if (!appState || !visibleTrip) return <LoadingScreen />;
 
@@ -429,6 +573,18 @@ function App() {
             trip={visibleTrip}
             managerMode={managerMode}
             onEdit={() => setEditingInfo(true)}
+            onAddTask={() => setEditingTask(null)}
+            onEditTask={setEditingTask}
+            onDeleteTask={deleteTask}
+            onToggleTask={toggleTask}
+            travelTools={travelTools}
+            onAddExpense={() => setEditingExpense(null)}
+            onEditExpense={setEditingExpense}
+            onDeleteExpense={deleteExpense}
+            onExportExpenses={exportExpenses}
+            onAddAttachment={() => attachmentInputRef.current?.click()}
+            onDownloadAttachment={downloadAttachment}
+            onDeleteAttachment={deleteAttachment}
           />
         )}
       </main>
@@ -457,6 +613,7 @@ function App() {
       )}
 
       <input ref={importInputRef} className="visually-hidden" type="file" accept="application/json,.json" onChange={handleImportFile} />
+      <input ref={attachmentInputRef} className="visually-hidden" type="file" accept="image/*,.pdf,.png,.jpg,.jpeg" onChange={handleAttachmentFile} />
 
       {editingItem && (
         <ItemEditorDialog
@@ -488,6 +645,18 @@ function App() {
 
       {editingInfo && (
         <TripInfoEditorDialog info={visibleTrip.info} onClose={() => setEditingInfo(false)} onSave={saveTripInfo} />
+      )}
+
+      {editingTask !== undefined && (
+        <TaskEditorDialog task={editingTask ?? undefined} onClose={() => setEditingTask(undefined)} onSave={saveTask} />
+      )}
+
+      {editingExpense !== undefined && (
+        <ExpenseEditorDialog expense={editingExpense ?? undefined} onClose={() => setEditingExpense(undefined)} onSave={saveExpense} />
+      )}
+
+      {pendingAttachment && (
+        <AttachmentEditorDialog file={pendingAttachment} onClose={() => setPendingAttachment(null)} onSave={saveAttachment} />
       )}
 
       {viewingTrafficDay && <TrafficDialog day={viewingTrafficDay} onClose={() => setViewingTrafficDay(null)} />}
@@ -879,7 +1048,39 @@ function RestaurantCard({
   );
 }
 
-function TripInfoPage({ trip, managerMode, onEdit }: { trip: TripDocument; managerMode: boolean; onEdit: () => void }) {
+function TripInfoPage({
+  trip,
+  managerMode,
+  onEdit,
+  onAddTask,
+  onEditTask,
+  onDeleteTask,
+  onToggleTask,
+  travelTools,
+  onAddExpense,
+  onEditExpense,
+  onDeleteExpense,
+  onExportExpenses,
+  onAddAttachment,
+  onDownloadAttachment,
+  onDeleteAttachment
+}: {
+  trip: TripDocument;
+  managerMode: boolean;
+  onEdit: () => void;
+  onAddTask: () => void;
+  onEditTask: (task: TripTask) => void;
+  onDeleteTask: (taskId: string) => void;
+  onToggleTask: (taskId: string) => void;
+  travelTools: TravelToolsData | null;
+  onAddExpense: () => void;
+  onEditExpense: (expense: ExpenseRecord) => void;
+  onDeleteExpense: (expenseId: string) => void;
+  onExportExpenses: () => void;
+  onAddAttachment: () => void;
+  onDownloadAttachment: (attachment: AttachmentMeta) => void;
+  onDeleteAttachment: (attachment: AttachmentMeta) => void;
+}) {
   const { hotel, flights, members } = trip.info;
   return (
     <div className="page-stack trip-page">
@@ -888,7 +1089,99 @@ function TripInfoPage({ trip, managerMode, onEdit }: { trip: TripDocument; manag
       <section className="info-card"><div className="info-card-icon flight-icon"><Plane size={22} /></div><div className="info-card-content"><span className="eyebrow">FLIGHTS</span><h2>航班</h2><div className="flight-list">{flights.map((flight) => <div className="flight-row" key={flight.id}><span className="flight-label">{flight.label}</span><div><strong>{flight.flightNumber ?? "航班待補"}</strong><span>{formatDate(flight.date)} · {flight.time}</span><span>{flight.route}</span></div></div>)}</div></div></section>
       <section className="quick-links-card"><div className="section-heading"><div><span className="eyebrow">QUICK NAVIGATION</span><h2>快速導航</h2></div><Navigation size={19} /></div><div className="quick-link-list"><AmapButton title={hotel.name} address={hotel.address} label="飯店高德導航" full /><AmapButton title={trip.info.airport} address={trip.info.airport} label="浦東機場導航" full /><AmapButton title={trip.info.maglevStation} label="龍陽路磁浮站導航" full /></div></section>
       {members.length > 0 && <section className="info-card members-card"><div className="info-card-icon"><Users size={22} /></div><div className="info-card-content"><span className="eyebrow">TRAVEL PARTY</span><h2>成員</h2><div className="member-list">{members.map((member) => <span key={member}>{member}</span>)}</div></div></section>}
+      <TaskChecklist tasks={trip.tasks} managerMode={managerMode} onAdd={onAddTask} onEdit={onEditTask} onDelete={onDeleteTask} onToggle={onToggleTask} />
+      {managerMode && travelTools && <PrivateTravelTools tools={travelTools} onAddExpense={onAddExpense} onEditExpense={onEditExpense} onDeleteExpense={onDeleteExpense} onExportExpenses={onExportExpenses} onAddAttachment={onAddAttachment} onDownloadAttachment={onDownloadAttachment} onDeleteAttachment={onDeleteAttachment} />}
     </div>
+  );
+}
+
+const TASK_CATEGORIES: TripTaskCategory[] = ["證件", "網路", "行李", "行程", "返程", "其他"];
+const EXPENSE_CATEGORIES: ExpenseCategory[] = ["餐飲", "交通", "住宿", "門票", "購物", "其他"];
+const ATTACHMENT_CATEGORIES: AttachmentCategory[] = ["機票／登機證", "訂位資訊", "付款 QR Code", "其他"];
+
+function TaskChecklist({
+  tasks,
+  managerMode,
+  onAdd,
+  onEdit,
+  onDelete,
+  onToggle
+}: {
+  tasks: TripTask[];
+  managerMode: boolean;
+  onAdd: () => void;
+  onEdit: (task: TripTask) => void;
+  onDelete: (taskId: string) => void;
+  onToggle: (taskId: string) => void;
+}) {
+  const completed = tasks.filter((task) => task.completed).length;
+  return (
+    <section className="tool-card task-card">
+      <div className="tool-card-header">
+        <div className="tool-card-title"><div className="info-card-icon task-icon"><ClipboardCheck size={21} /></div><div><span className="eyebrow">BEFORE YOU GO</span><h2>家庭任務清單</h2><p>{completed} / {tasks.length} 項已完成</p></div></div>
+        {managerMode && <button className="secondary-button compact-button" onClick={onAdd}><Plus size={16} /> 新增任務</button>}
+      </div>
+      <div className="task-list">
+        {tasks.map((task) => (
+          <div className={`task-row ${task.completed ? "is-complete" : ""}`} key={task.id}>
+            <button className="task-check" aria-label={task.completed ? `取消完成：${task.title}` : `標記完成：${task.title}`} aria-pressed={task.completed} onClick={() => managerMode && onToggle(task.id)} disabled={!managerMode}>{task.completed && <Check size={16} />}</button>
+            <div className="task-copy"><strong>{task.title}</strong><span>{task.category}{task.assignee ? ` · ${task.assignee}` : ""}{task.notes ? ` · ${task.notes}` : ""}</span></div>
+            {managerMode && <div className="item-admin-actions"><button className="small-icon-button" aria-label="編輯任務" onClick={() => onEdit(task)}><Pencil size={14} /></button><button className="small-icon-button danger" aria-label="刪除任務" onClick={() => onDelete(task.id)}><Trash2 size={14} /></button></div>}
+          </div>
+        ))}
+        {tasks.length === 0 && <p className="tool-empty">尚未建立任務。</p>}
+      </div>
+      <p className="tool-note">任務會跟著行程版本發布；家人可以查看管理者發布的最新狀態。</p>
+    </section>
+  );
+}
+
+function PrivateTravelTools({
+  tools,
+  onAddExpense,
+  onEditExpense,
+  onDeleteExpense,
+  onExportExpenses,
+  onAddAttachment,
+  onDownloadAttachment,
+  onDeleteAttachment
+}: {
+  tools: TravelToolsData;
+  onAddExpense: () => void;
+  onEditExpense: (expense: ExpenseRecord) => void;
+  onDeleteExpense: (expenseId: string) => void;
+  onExportExpenses: () => void;
+  onAddAttachment: () => void;
+  onDownloadAttachment: (attachment: AttachmentMeta) => void;
+  onDeleteAttachment: (attachment: AttachmentMeta) => void;
+}) {
+  const summary = summarizeExpenses(tools.expenses);
+  return (
+    <section className="private-tools-section">
+      <div className="section-heading"><div><span className="eyebrow">LOCAL ONLY</span><h2>旅行工具</h2><p className="section-description">費用與票券只保存在這台管理裝置，不會寫入公開行程。</p></div><WalletCards size={21} /></div>
+      <div className="private-tools-grid">
+        <section className="tool-card private-tool-card">
+          <div className="tool-card-header"><div className="tool-card-title"><div className="info-card-icon expense-icon"><WalletCards size={20} /></div><div><span className="eyebrow">EXPENSES</span><h3>費用記帳</h3><p>人民幣總支出</p></div></div><div className="tool-header-actions"><button className="small-icon-button" aria-label="匯出旅費" onClick={onExportExpenses}><FileJson size={16} /></button><button className="secondary-button compact-button" onClick={onAddExpense}><Plus size={16} /> 新增</button></div></div>
+          <div className="expense-total"><strong>¥ {summary.total.toFixed(2)}</strong><span>{tools.expenses.length} 筆記錄</span></div>
+          {Object.keys(summary.byPayer).length > 0 && <div className="expense-breakdown">{Object.entries(summary.byPayer).map(([payer, amount]) => <span key={payer}>{payer} ¥{amount.toFixed(2)}</span>)}</div>}
+          <div className="expense-list">
+            {[...tools.expenses].sort((a, b) => `${b.date}${b.createdAt}`.localeCompare(`${a.date}${a.createdAt}`)).map((expense) => (
+              <div className="expense-row" key={expense.id}><div className="expense-copy"><strong>{expense.title}</strong><span>{expense.date} · {expense.category} · {expense.payer}</span>{expense.note && <small>{expense.note}</small>}</div><strong className="expense-amount">¥{expense.amountCny.toFixed(2)}</strong><div className="item-admin-actions"><button className="small-icon-button" aria-label="編輯旅費" onClick={() => onEditExpense(expense)}><Pencil size={13} /></button><button className="small-icon-button danger" aria-label="刪除旅費" onClick={() => onDeleteExpense(expense.id)}><Trash2 size={13} /></button></div></div>
+            ))}
+            {tools.expenses.length === 0 && <p className="tool-empty">還沒有旅費記錄，出發後可在這裡快速登記。</p>}
+          </div>
+        </section>
+
+        <section className="tool-card private-tool-card">
+          <div className="tool-card-header"><div className="tool-card-title"><div className="info-card-icon attachment-icon"><Paperclip size={20} /></div><div><span className="eyebrow">TICKETS & FILES</span><h3>票券與截圖</h3><p>本機保存，不公開上傳</p></div></div><button className="secondary-button compact-button" onClick={onAddAttachment}><Upload size={16} /> 新增附件</button></div>
+          <div className="attachment-list">
+            {tools.attachments.map((attachment) => <div className="attachment-row" key={attachment.id}><div className="attachment-icon-box">{attachment.mimeType.startsWith("image/") ? <FileText size={18} /> : <FileJson size={18} />}</div><div className="attachment-copy"><strong title={attachment.name}>{attachment.name}</strong><span>{attachment.category} · {formatFileSize(attachment.size)}</span>{attachment.note && <small>{attachment.note}</small>}</div><div className="item-admin-actions"><button className="small-icon-button" aria-label={`下載 ${attachment.name}`} onClick={() => onDownloadAttachment(attachment)}><Download size={14} /></button><button className="small-icon-button danger" aria-label={`刪除 ${attachment.name}`} onClick={() => onDeleteAttachment(attachment)}><Trash2 size={14} /></button></div></div>)}
+            {tools.attachments.length === 0 && <p className="tool-empty">可加入機票、訂位截圖或付款 QR Code。</p>}
+          </div>
+          <p className="tool-note">附件放在瀏覽器的 IndexedDB；清除網站資料或換裝置前，請先下載保留。</p>
+        </section>
+      </div>
+    </section>
   );
 }
 
@@ -991,6 +1284,40 @@ function RestaurantEditorDialog({ restaurant, onClose, onSave }: { restaurant?: 
 function TripInfoEditorDialog({ info, onClose, onSave }: { info: TripInfo; onClose: () => void; onSave: (info: TripInfo) => void }) {
   const [form, setForm] = useState<TripInfo>(() => clone(info));
   return <Modal title="編輯旅程資料" onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); onSave(form); }}><div className="form-section-label">飯店</div><label>名稱<input value={form.hotel.name} onChange={(event) => setForm((current) => ({ ...current, hotel: { ...current.hotel, name: event.target.value } }))} /></label><label>地址<input value={form.hotel.address} onChange={(event) => setForm((current) => ({ ...current, hotel: { ...current.hotel, address: event.target.value } }))} /></label><label>電話<input value={form.hotel.phone ?? ""} placeholder="例如 +86-21-63522888" onChange={(event) => setForm((current) => ({ ...current, hotel: { ...current.hotel, phone: event.target.value || undefined } }))} /></label><div className="form-section-label">航班</div>{form.flights.map((flight, index) => <div className="flight-edit-row" key={flight.id}><strong>{flight.label}</strong><input aria-label={`${flight.label}航班號`} value={flight.flightNumber ?? ""} placeholder="航班號" onChange={(event) => setForm((current) => ({ ...current, flights: current.flights.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, flightNumber: event.target.value || undefined } : candidate) }))} /><input aria-label={`${flight.label}時間`} value={flight.time} placeholder="時間" onChange={(event) => setForm((current) => ({ ...current, flights: current.flights.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, time: event.target.value } : candidate) }))} /><input aria-label={`${flight.label}路線`} value={flight.route} placeholder="路線" onChange={(event) => setForm((current) => ({ ...current, flights: current.flights.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, route: event.target.value } : candidate) }))} /></div>)}<label>成員（每行一位）<textarea rows={4} value={form.members.join("\n")} onChange={(event) => setForm((current) => ({ ...current, members: event.target.value.split("\n").map((member) => member.trim()).filter(Boolean) }))} /></label><label>機場<input value={form.airport} onChange={(event) => setForm((current) => ({ ...current, airport: event.target.value }))} /></label><label>磁浮站<input value={form.maglevStation} onChange={(event) => setForm((current) => ({ ...current, maglevStation: event.target.value }))} /></label><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />儲存到草稿</button></div></form></Modal>;
+}
+
+function TaskEditorDialog({ task, onClose, onSave }: { task?: TripTask; onClose: () => void; onSave: (task: TripTask) => void }) {
+  const [form, setForm] = useState<TripTask>(() => ({
+    id: task?.id ?? makeId("task"),
+    title: task?.title ?? "",
+    category: task?.category ?? "其他",
+    completed: task?.completed ?? false,
+    assignee: task?.assignee,
+    notes: task?.notes
+  }));
+  const setField = <K extends keyof TripTask>(field: K, value: TripTask[K]) => setForm((current) => ({ ...current, [field]: value }));
+  return <Modal title={task ? "編輯家庭任務" : "新增家庭任務"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.title.trim()) return; onSave({ ...form, title: form.title.trim(), assignee: form.assignee?.trim() || undefined, notes: form.notes?.trim() || undefined }); }}><label>任務內容<input value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="例如：確認護照與台胞證" required /></label><div className="form-grid two-columns"><label>分類<select value={form.category} onChange={(event) => setField("category", event.target.value as TripTaskCategory)}>{TASK_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select></label><label>負責人<input value={form.assignee ?? ""} onChange={(event) => setField("assignee", event.target.value || undefined)} placeholder="可不填" /></label></div><label>備註<textarea value={form.notes ?? ""} onChange={(event) => setField("notes", event.target.value || undefined)} rows={3} placeholder="例如：放在隨身行李" /></label><label className="check-row"><input type="checkbox" checked={form.completed} onChange={(event) => setField("completed", event.target.checked)} />標記為已完成</label><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />儲存到草稿</button></div></form></Modal>;
+}
+
+function ExpenseEditorDialog({ expense, onClose, onSave }: { expense?: ExpenseRecord; onClose: () => void; onSave: (expense: ExpenseRecord) => void }) {
+  const [form, setForm] = useState<ExpenseRecord>(() => ({
+    id: expense?.id ?? makeId("expense"),
+    date: expense?.date ?? getDateKey(new Date()),
+    title: expense?.title ?? "",
+    amountCny: expense?.amountCny ?? 0,
+    payer: expense?.payer ?? "我",
+    category: expense?.category ?? "其他",
+    note: expense?.note,
+    createdAt: expense?.createdAt ?? new Date().toISOString()
+  }));
+  const setField = <K extends keyof ExpenseRecord>(field: K, value: ExpenseRecord[K]) => setForm((current) => ({ ...current, [field]: value }));
+  return <Modal title={expense ? "編輯旅費" : "新增旅費"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.title.trim() || form.amountCny <= 0 || !form.payer.trim()) return; onSave({ ...form, title: form.title.trim(), payer: form.payer.trim(), note: form.note?.trim() || undefined, amountCny: Number(form.amountCny.toFixed(2)) }); }}><div className="form-grid two-columns"><label>日期<input type="date" value={form.date} onChange={(event) => setField("date", event.target.value)} required /></label><label>金額（人民幣）<input type="number" min="0.01" step="0.01" value={form.amountCny || ""} onChange={(event) => setField("amountCny", Number(event.target.value))} placeholder="例如 128.50" required /></label></div><label>項目<input value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="例如：Day 2 午餐" required /></label><div className="form-grid two-columns"><label>付款人<input value={form.payer} onChange={(event) => setField("payer", event.target.value)} placeholder="例如：我" required /></label><label>分類<select value={form.category} onChange={(event) => setField("category", event.target.value as ExpenseCategory)}>{EXPENSE_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select></label></div><label>備註<textarea value={form.note ?? ""} onChange={(event) => setField("note", event.target.value || undefined)} rows={3} placeholder="例如：含服務費、已用美團優惠" /></label><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />儲存到本機</button></div></form></Modal>;
+}
+
+function AttachmentEditorDialog({ file, onClose, onSave }: { file: File; onClose: () => void; onSave: (category: AttachmentCategory, note: string) => void }) {
+  const [category, setCategory] = useState<AttachmentCategory>(file.type === "application/pdf" ? "機票／登機證" : "其他");
+  const [note, setNote] = useState("");
+  return <Modal title="保存票券／截圖" onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); onSave(category, note); }}><div className="attachment-preview"><FileText size={22} /><div><strong>{file.name}</strong><span>{file.type || "檔案"} · {formatFileSize(file.size)}</span></div></div><label>附件分類<select value={category} onChange={(event) => setCategory(event.target.value as AttachmentCategory)}>{ATTACHMENT_CATEGORIES.map((candidate) => <option key={candidate} value={candidate}>{candidate}</option>)}</select></label><label>備註<textarea value={note} onChange={(event) => setNote(event.target.value)} rows={3} placeholder="例如：BR721 回程登機證" /></label><p className="helper-text">這個檔案只會存在目前裝置，不會放進 public/trip.json 或 GitHub。</p><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Paperclip size={16} />保存到本機</button></div></form></Modal>;
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
