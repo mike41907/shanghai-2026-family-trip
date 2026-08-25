@@ -1297,10 +1297,35 @@ function TripInfoPage({
       <section className="info-card hotel-card"><div className="info-card-icon"><Hotel size={22} /></div><div className="info-card-content"><span className="eyebrow">HOTEL</span><h2>{hotel.name}</h2><p>{hotel.address}</p>{hotel.phone && <p className="contact-line"><span>電話</span><a href={`tel:${hotel.phone}`}>{hotel.phone}</a></p>}<div className="hotel-actions"><AmapButton title={hotel.name} address={hotel.address} /><AddressActions address={hotel.address} phone={hotel.phone} /></div></div></section>
       <section className="info-card"><div className="info-card-icon flight-icon"><Plane size={22} /></div><div className="info-card-content"><span className="eyebrow">FLIGHTS</span><h2>航班</h2><div className="flight-list">{flights.map((flight) => <div className="flight-row" key={flight.id}><span className="flight-label">{flight.label}</span><div><strong>{flight.flightNumber ?? "航班待補"}</strong><span>{formatDate(flight.date)} · {flight.time}</span><span>{flight.route}</span></div></div>)}</div></div></section>
       <section className="quick-links-card"><div className="section-heading"><div><span className="eyebrow">QUICK NAVIGATION</span><h2>快速導航</h2></div><Navigation size={19} /></div><div className="quick-link-list"><AmapButton title={hotel.name} address={hotel.address} label="飯店高德導航" full /><AmapButton title={trip.info.airport} address={trip.info.airport} label="浦東機場導航" full /><AmapButton title={trip.info.maglevStation} label="龍陽路磁浮站導航" full /></div></section>
+      <MetroMapCard />
       {members.length > 0 && <section className="info-card members-card"><div className="info-card-icon"><Users size={22} /></div><div className="info-card-content"><span className="eyebrow">TRAVEL PARTY</span><h2>成員</h2><div className="member-list">{members.map((member) => <span key={member}>{member}</span>)}</div></div></section>}
       <TaskChecklist tasks={trip.tasks} managerMode={managerMode} onAdd={onAddTask} onEdit={onEditTask} onDelete={onDeleteTask} onToggle={onToggleTask} />
       {managerMode && travelTools && <PrivateTravelTools tools={travelTools} onAddExpense={onAddExpense} onEditExpense={onEditExpense} onDeleteExpense={onDeleteExpense} onExportExpenses={onExportExpenses} onOcrExpense={onOcrExpense} onAddAttachment={onAddAttachment} onDownloadAttachment={onDownloadAttachment} onDeleteAttachment={onDeleteAttachment} />}
     </div>
+  );
+}
+
+const OFFICIAL_SHANGHAI_METRO_MAP_URL = "https://jtw.sh.gov.cn/gdjtxlt/index.html";
+
+function MetroMapCard() {
+  return (
+    <section className="metro-map-card">
+      <div className="section-heading">
+        <div><span className="eyebrow">METRO MAP</span><h2>上海地鐵圖</h2><p className="section-description">完整路線圖開官方版本；本次會用到的路線離線也能查看。</p></div>
+        <Map size={21} />
+      </div>
+      <a className="metro-map-button" href={OFFICIAL_SHANGHAI_METRO_MAP_URL} target="_blank" rel="noreferrer">
+        <span><Map size={17} /> 開啟官方上海地鐵路線圖</span>
+        <ExternalLink size={15} />
+      </a>
+      <div className="metro-route-heading"><strong>本次行程會用到</strong><span>快速看轉乘</span></div>
+      <div className="metro-route-list">
+        <div className="metro-route-row"><span className="metro-line-badge maglev">磁浮</span><div><strong>浦東機場 ↔ 龍陽路</strong><span>Day 1 抵達、Day 5 回機場</span></div></div>
+        <div className="metro-route-row"><span className="metro-line-badge line-2">2 號線</span><div><strong>南京東路站 → 虹橋火車站</strong><span>Day 3 前往朱家角的第一段地鐵</span></div></div>
+        <div className="metro-route-row"><span className="metro-line-badge line-17">17 號線</span><div><strong>虹橋火車站 → 朱家角站</strong><span>Day 3 下車後再搭滴滴到古鎮</span></div></div>
+      </div>
+      <p className="metro-map-note">官方路線圖需要網路；若在離線狀態，以上三段路線仍會保留在 App 中。</p>
+    </section>
   );
 }
 

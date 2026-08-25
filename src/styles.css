@@ -2709,6 +2709,123 @@ code {
   scroll-margin-top: 90px;
 }
 
+.metro-map-card {
+  display: grid;
+  gap: 14px;
+  padding: 19px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.metro-map-card .section-heading {
+  align-items: flex-start;
+}
+
+.metro-map-card .section-heading > svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.metro-map-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 48%, var(--line));
+  border-radius: 13px;
+  color: var(--brand-deep);
+  background: var(--accent-soft);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.metro-map-button > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.metro-map-button:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.metro-route-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.metro-route-heading span,
+.metro-map-note,
+.metro-route-row div span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 560;
+  line-height: 1.5;
+}
+
+.metro-route-list {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.metro-route-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  border-bottom: 1px solid var(--line);
+}
+
+.metro-route-row > div {
+  display: grid;
+  gap: 3px;
+}
+
+.metro-route-row div strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.metro-line-badge {
+  display: inline-grid;
+  min-height: 27px;
+  place-items: center;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.metro-line-badge.maglev {
+  color: #705126;
+  background: #f4e6c8;
+}
+
+.metro-line-badge.line-2 {
+  color: #23647b;
+  background: #dceef4;
+}
+
+.metro-line-badge.line-17 {
+  color: #7a4d8e;
+  background: #eee2f3;
+}
+
+.metro-map-note {
+  margin: 0;
+}
+
 .private-tools-section > .section-heading {
   align-items: flex-start;
 }
