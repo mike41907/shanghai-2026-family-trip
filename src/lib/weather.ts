@@ -92,10 +92,13 @@ function parseWeatherPayload(payload: OpenMeteoPayload): WeatherSnapshot | null 
   const currentCode = numberValue(current.weather_code);
   const windSpeedKmh = numberValue(current.wind_speed_10m);
   const dates = stringArray(daily.time);
-  const codes = numberArray(daily.weather_code);
-  const highs = numberArray(daily.temperature_2m_max);
-  const lows = numberArray(daily.temperature_2m_min);
-  const precipitation = optionalNumberArray(daily.precipitation_probability_max);
+  // Open-Meteo may return a trailing null for a day that has no complete
+  // forecast yet. Keep the array indexes aligned and skip only that day
+  // instead of discarding the whole response.
+  const codes = nullableNumberArray(daily.weather_code);
+  const highs = nullableNumberArray(daily.temperature_2m_max);
+  const lows = nullableNumberArray(daily.temperature_2m_min);
+  const precipitation = nullableNumberArray(daily.precipitation_probability_max);
   if (!currentTime || temperatureC === undefined || apparentTemperatureC === undefined || currentCode === undefined || windSpeedKmh === undefined || !dates || !codes || !highs || !lows) return null;
 
   const dailyItems = dates.map((date, index) => {
@@ -140,10 +143,8 @@ function stringArray(value: unknown): string[] | undefined {
   return Array.isArray(value) && value.every((item) => typeof item === "string") ? value as string[] : undefined;
 }
 
-function numberArray(value: unknown): number[] | undefined {
-  return Array.isArray(value) && value.every((item) => typeof item === "number" && Number.isFinite(item)) ? value as number[] : undefined;
-}
-
-function optionalNumberArray(value: unknown): number[] | undefined {
-  return value === undefined ? undefined : numberArray(value);
+function nullableNumberArray(value: unknown): Array<number | undefined> | undefined {
+  return Array.isArray(value) && value.every((item) => item === null || numberValue(item) !== undefined)
+    ? value.map((item) => numberValue(item))
+    : undefined;
 }

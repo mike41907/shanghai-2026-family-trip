@@ -318,6 +318,17 @@ button:disabled {
   font-weight: 560;
 }
 
+.manager-strip-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.manager-strip-actions .quiet-button {
+  white-space: nowrap;
+}
+
 .page-content {
   width: min(980px, calc(100% - 32px));
   margin: 0 auto;
@@ -2023,6 +2034,15 @@ code {
     margin-top: 9px;
   }
 
+  .manager-strip-actions {
+    width: 100%;
+  }
+
+  .manager-strip-actions .quiet-button {
+    flex: 1;
+    justify-content: center;
+  }
+
   .page-content {
     width: calc(100% - 24px);
     padding-top: 20px;
@@ -2261,6 +2281,18 @@ code {
 .weather-loading,
 .weather-unavailable {
   padding: 5px 0;
+}
+
+.weather-unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.weather-retry-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .weather-loading {

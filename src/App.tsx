@@ -585,7 +585,10 @@ function App() {
             <span className="status-dot" /> 管理模式
             <span className="manager-strip-detail">{isDirty ? "尚未發布 · 修改只存在本機草稿" : "目前與發布版本一致"}</span>
           </div>
-          <button className="quiet-button" onClick={() => setManagerOpen(true)}><Settings size={15} /> 管理工具</button>
+          <div className="manager-strip-actions">
+            <button className="quiet-button" disabled={!travelTools} onClick={() => paymentOcrInputRef.current?.click()}><FileText size={15} /> 拍照記帳</button>
+            <button className="quiet-button" onClick={() => setManagerOpen(true)}><Settings size={15} /> 管理工具</button>
+          </div>
         </div>
       )}
 
@@ -922,6 +925,7 @@ function WeatherCard({ targetDate }: { targetDate: string }) {
   const [weather, setWeather] = useState<WeatherSnapshot | null>(() => readCachedWeather());
   const [loading, setLoading] = useState(() => weather === null);
   const [offline, setOffline] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -944,7 +948,7 @@ function WeatherCard({ targetDate }: { targetDate: string }) {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, []);
+  }, [refreshToken]);
 
   const todayInShanghai = weather?.current.time.slice(0, 10);
   const targetForecast = weather?.daily.find((day) => day.date === targetDate);
@@ -954,7 +958,7 @@ function WeatherCard({ targetDate }: { targetDate: string }) {
   return (
     <section className="weather-card" aria-live="polite">
       <div className="weather-card-heading"><div><span className="eyebrow">SHANGHAI WEATHER</span><h2>上海天氣</h2></div><CloudSun size={22} /></div>
-      {weather ? <WeatherSummary weather={weather} targetDate={targetDate} targetForecast={targetForecast} showForecast={showForecast} offline={offline} /> : loading ? <div className="weather-loading"><span className="weather-loading-dot" />正在取得上海天氣…</div> : <div className="weather-unavailable">目前無法取得天氣，請稍後重新整理。</div>}
+      {weather ? <WeatherSummary weather={weather} targetDate={targetDate} targetForecast={targetForecast} showForecast={showForecast} offline={offline} /> : loading ? <div className="weather-loading"><span className="weather-loading-dot" />正在取得上海天氣…</div> : <div className="weather-unavailable"><span>目前無法取得天氣。</span><button className="text-action weather-retry-button" onClick={() => setRefreshToken((value) => value + 1)}>重新取得</button></div>}
       {weather && <div className="weather-footer">{offline ? "離線顯示最近一次資料" : `更新於 ${formatWeatherUpdatedAt(weather.fetchedAt)}`}<span>資料來源：Open-Meteo</span></div>}
     </section>
   );
