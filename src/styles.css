@@ -96,6 +96,16 @@ button:disabled {
   padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
 }
 
+.app-shell.font-scale-small {
+  width: 108.6957%;
+  zoom: 0.92;
+}
+
+.app-shell.font-scale-large {
+  width: 89.2857%;
+  zoom: 1.12;
+}
+
 .app-header {
   position: sticky;
   top: 0;
@@ -188,6 +198,36 @@ button:disabled {
 
 .header-actions {
   gap: 8px;
+}
+
+.font-size-control {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+}
+
+.font-size-control button {
+  width: 29px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.font-size-control button:last-child {
+  border-right: 0;
+}
+
+.font-size-control button:hover,
+.font-size-control button.is-active {
+  color: var(--brand-deep);
+  background: var(--surface-tint);
 }
 
 .icon-button,
@@ -476,7 +516,14 @@ button:disabled {
 }
 
 .live-card.next-card {
+  grid-column: 1 / -1;
+  order: -1;
+  min-height: 218px;
   background: linear-gradient(145deg, var(--surface) 60%, var(--surface-tint));
+}
+
+.next-card h2 {
+  font-size: clamp(23px, 4vw, 31px);
 }
 
 .card-label {
@@ -560,6 +607,33 @@ button:disabled {
   flex: 0 0 auto;
   margin-top: 1px;
   color: var(--accent);
+}
+
+.next-actions,
+.hotel-actions,
+.address-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.next-actions,
+.hotel-actions {
+  margin-top: 10px;
+}
+
+.next-actions .amap-button,
+.hotel-actions .amap-button {
+  margin-top: 0;
+}
+
+.address-actions .text-action {
+  text-decoration: none;
+}
+
+.phone-action {
+  color: var(--brand) !important;
 }
 
 .section-block {
@@ -674,8 +748,49 @@ button:disabled {
   padding: 18px;
 }
 
-.transit-heading > svg {
+.transit-toggle {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.transit-toggle > span:first-child {
+  display: grid;
+  gap: 0;
+}
+
+.transit-toggle strong {
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: 22px;
+  letter-spacing: -0.045em;
+}
+
+.transit-toggle-action {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.transit-toggle-action svg {
+  transition: transform 160ms ease;
+}
+
+.transit-toggle.is-expanded .transit-toggle-action svg {
+  transform: rotate(180deg);
+}
+
+.transit-collapsed-summary {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .transit-list {
@@ -762,18 +877,6 @@ button:disabled {
   padding: 6px 8px;
   color: var(--muted);
   background: var(--surface-soft);
-}
-
-.is-compact .transit-segment:nth-child(n + 5) {
-  display: none;
-}
-
-.is-compact .transit-list::after {
-  display: block;
-  padding-top: 8px;
-  color: var(--muted);
-  content: "點進行程查看完整交通";
-  font-size: 11px;
 }
 
 .day-tabs {

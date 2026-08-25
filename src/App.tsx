@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   Check,
+  ChevronDown,
   ChevronRight,
   CircleAlert,
   CircleCheck,
@@ -22,6 +23,7 @@ import {
   Navigation,
   Pencil,
   Plane,
+  PhoneCall,
   Plus,
   RotateCcw,
   Route,
@@ -79,6 +81,7 @@ import "./styles.css";
 
 type Page = "today" | "schedule" | "eat" | "trip";
 type Theme = "light" | "dark";
+type FontScale = "small" | "standard" | "large";
 type ToastTone = "default" | "success" | "error";
 
 interface ToastState {
@@ -103,6 +106,10 @@ function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem("shanghai-2026:theme");
     return saved === "dark" ? "dark" : "light";
+  });
+  const [fontScale, setFontScale] = useState<FontScale>(() => {
+    const saved = localStorage.getItem("shanghai-2026:font-scale");
+    return saved === "small" || saved === "large" ? saved : "standard";
   });
   const [now, setNow] = useState(() => new Date());
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -130,6 +137,10 @@ function App() {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("shanghai-2026:theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("shanghai-2026:font-scale", fontScale);
+  }, [fontScale]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60_000);
@@ -312,6 +323,7 @@ function App() {
       startTime,
       title: restaurant.name,
       address: restaurant.address,
+      phone: restaurant.phone,
       businessHours: restaurant.businessHours,
       category: restaurant.category,
       notes: notes || restaurant.notes,
@@ -328,6 +340,17 @@ function App() {
     showToast(`${restaurant.name} 已加入 Day ${day.dayNumber} 草稿。`, "success");
   };
 
+  const removeRestaurantFromSchedule = (restaurant: Restaurant, dayId: string, itemId: string) => {
+    if (!window.confirm(`將「${restaurant.name}」移回備選餐廳？正式行程中的這一站會被移除。`)) return;
+    updateDraft((draft) => ({
+      ...draft,
+      days: draft.days.map((day) => day.id === dayId
+        ? { ...day, items: day.items.filter((item) => item.id !== itemId) }
+        : day)
+    }));
+    showToast(`${restaurant.name} 已移回備選餐廳。`, "success");
+  };
+
   const saveTripInfo = (info: TripInfo) => {
     updateDraft((draft) => ({ ...draft, info }));
     setEditingInfo(false);
@@ -338,13 +361,15 @@ function App() {
   if (!appState || !visibleTrip) return <LoadingScreen />;
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell font-scale-${fontScale}`}>
       <AppHeader
         trip={visibleTrip}
         managerMode={managerMode}
         managerDirty={isDirty}
         theme={theme}
+        fontScale={fontScale}
         onToggleTheme={() => setTheme((current) => current === "light" ? "dark" : "light")}
+        onFontScaleChange={setFontScale}
         onOpenManager={() => {
           setManagerMode(true);
           setManagerOpen(true);
@@ -396,6 +421,7 @@ function App() {
             onEditRestaurant={setEditingRestaurant}
             onDeleteRestaurant={deleteRestaurant}
             onAddToSchedule={setAddingRestaurant}
+            onRemoveFromSchedule={removeRestaurantFromSchedule}
           />
         )}
         {activePage === "trip" && (
@@ -480,14 +506,18 @@ function AppHeader({
   managerMode,
   managerDirty,
   theme,
+  fontScale,
   onToggleTheme,
+  onFontScaleChange,
   onOpenManager
 }: {
   trip: TripDocument;
   managerMode: boolean;
   managerDirty: boolean;
   theme: Theme;
+  fontScale: FontScale;
   onToggleTheme: () => void;
+  onFontScaleChange: (scale: FontScale) => void;
   onOpenManager: () => void;
 }) {
   return (
@@ -500,6 +530,11 @@ function AppHeader({
         </div>
       </div>
       <div className="header-actions">
+        <div className="font-size-control" role="group" aria-label="整體字體大小">
+          <button className={fontScale === "small" ? "is-active" : ""} aria-label="縮小整體字體" aria-pressed={fontScale === "small"} onClick={() => onFontScaleChange("small")}>A−</button>
+          <button className={fontScale === "standard" ? "is-active" : ""} aria-label="還原標準字體" aria-pressed={fontScale === "standard"} onClick={() => onFontScaleChange("standard")}>A</button>
+          <button className={fontScale === "large" ? "is-active" : ""} aria-label="放大整體字體" aria-pressed={fontScale === "large"} onClick={() => onFontScaleChange("large")}>A+</button>
+        </div>
         <button className="icon-button" aria-label={theme === "light" ? "切換深色模式" : "切換淺色模式"} onClick={onToggleTheme}>
           {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
         </button>
@@ -594,7 +629,7 @@ function TodayPage({
                 {nextItem.businessHours && <p><Clock3 size={15} />{nextItem.businessHours}</p>}
                 {nextItem.transportMode && <TransportChip mode={nextItem.transportMode} />}
               </div>
-              {nextItem.address && <AmapButton title={nextItem.title} address={nextItem.address} />}
+              {(nextItem.address || nextItem.phone) && <div className="next-actions"><AddressActions address={nextItem.address} phone={nextItem.phone} />{nextItem.address && <AmapButton title={nextItem.title} address={nextItem.address} />}</div>}
             </>
           ) : (
             <div className="empty-message">今天沒有更多排程。</div>
@@ -750,6 +785,7 @@ function ItineraryCard({
         {item.notes && <p className="item-notes">{item.notes}</p>}
         <div className="item-actions">
           {item.address && <AmapButton title={item.title} address={item.address} />}
+          <AddressActions address={item.address} phone={item.phone} />
           <button className="text-action" onClick={onViewTraffic}><Route size={15} />查看交通</button>
           {managerMode && <><button className={`text-action ${item.completed ? "is-completed" : ""}`} onClick={onToggleComplete}>{item.completed ? <Check size={15} /> : <CircleCheck size={15} />}{item.completed ? "已完成" : "標記完成"}</button><button className="text-action" onClick={onDuplicate}><Copy size={15} />複製</button></>}
         </div>
@@ -759,18 +795,23 @@ function ItineraryCard({
 }
 
 function TransitCard({ segments, compact = false }: { segments: TransitSegment[]; compact?: boolean }) {
+  const [expanded, setExpanded] = useState(!compact);
   return (
     <section className={`transit-card ${compact ? "is-compact" : ""}`}>
-      <div className="transit-heading"><div><span className="eyebrow">GETTING AROUND</span><h2>交通卡</h2></div><Route size={19} /></div>
-      <div className="transit-list">
-        {segments.map((segment) => (
-          <div className="transit-segment" key={segment.id}>
-            <div className={`transport-symbol mode-${segment.mode}`}>{TRANSPORT_EMOJI[segment.mode]}</div>
-            <div className="transit-route"><strong>{segment.from}</strong><ChevronRight size={15} /><strong>{segment.to}</strong><span>{segment.detail ?? TRANSPORT_LABELS[segment.mode]}{segment.duration ? ` · ${segment.duration}` : ""}</span></div>
-            <span className="transport-label">{TRANSPORT_LABELS[segment.mode]}</span>
-          </div>
-        ))}
-      </div>
+      <button className={`transit-heading transit-toggle ${expanded ? "is-expanded" : ""}`} aria-expanded={expanded} onClick={() => setExpanded((current) => !current)}>
+        <span><span className="eyebrow">GETTING AROUND</span><strong>交通卡</strong></span>
+        <span className="transit-toggle-action"><span>{expanded ? "收合" : `展開 ${segments.length} 段`}</span><ChevronDown size={19} /></span>
+      </button>
+      {expanded && <div className="transit-list">
+          {segments.map((segment) => (
+            <div className="transit-segment" key={segment.id}>
+              <div className={`transport-symbol mode-${segment.mode}`}>{TRANSPORT_EMOJI[segment.mode]}</div>
+              <div className="transit-route"><strong>{segment.from}</strong><ChevronRight size={15} /><strong>{segment.to}</strong><span>{segment.detail ?? TRANSPORT_LABELS[segment.mode]}{segment.duration ? ` · ${segment.duration}` : ""}</span></div>
+              <span className="transport-label">{TRANSPORT_LABELS[segment.mode]}</span>
+            </div>
+          ))}
+        </div>}
+      {!expanded && <p className="transit-collapsed-summary">{segments.length ? `共 ${segments.length} 段交通，點擊查看完整路線` : "尚未安排交通"}</p>}
     </section>
   );
 }
@@ -781,7 +822,8 @@ function EatPage({
   onAddRestaurant,
   onEditRestaurant,
   onDeleteRestaurant,
-  onAddToSchedule
+  onAddToSchedule,
+  onRemoveFromSchedule
 }: {
   trip: TripDocument;
   managerMode: boolean;
@@ -789,6 +831,7 @@ function EatPage({
   onEditRestaurant: (restaurant: Restaurant) => void;
   onDeleteRestaurant: (restaurantId: string) => void;
   onAddToSchedule: (restaurant: Restaurant) => void;
+  onRemoveFromSchedule: (restaurant: Restaurant, dayId: string, itemId: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const filtered = trip.restaurants.filter((restaurant) => `${restaurant.name} ${restaurant.category} ${restaurant.area ?? ""}`.toLowerCase().includes(query.toLowerCase()));
@@ -799,7 +842,7 @@ function EatPage({
       <div className="restaurant-grid">
         {filtered.map((restaurant) => {
           const assignment = findRestaurantAssignment(trip, restaurant.id);
-          return <RestaurantCard key={restaurant.id} restaurant={restaurant} assignment={assignment} managerMode={managerMode} onEdit={() => onEditRestaurant(restaurant)} onDelete={() => onDeleteRestaurant(restaurant.id)} onAddToSchedule={() => onAddToSchedule(restaurant)} />;
+          return <RestaurantCard key={restaurant.id} restaurant={restaurant} assignment={assignment} managerMode={managerMode} onEdit={() => onEditRestaurant(restaurant)} onDelete={() => onDeleteRestaurant(restaurant.id)} onAddToSchedule={() => onAddToSchedule(restaurant)} onRemoveFromSchedule={() => assignment && onRemoveFromSchedule(restaurant, assignment.day.id, assignment.item.id)} />;
         })}
       </div>
       {filtered.length === 0 && <EmptyState icon={<Utensils size={25} />} title="找不到這間餐廳" description="可以換個關鍵字，或在管理模式新增一筆。" />}
@@ -813,7 +856,8 @@ function RestaurantCard({
   managerMode,
   onEdit,
   onDelete,
-  onAddToSchedule
+  onAddToSchedule,
+  onRemoveFromSchedule
 }: {
   restaurant: Restaurant;
   assignment?: { day: TripDay; item: ItineraryItem };
@@ -821,14 +865,15 @@ function RestaurantCard({
   onEdit: () => void;
   onDelete: () => void;
   onAddToSchedule: () => void;
+  onRemoveFromSchedule: () => void;
 }) {
   return (
     <article className="restaurant-card">
-      <div className="restaurant-card-topline"><span className="category-tag">{restaurant.category}</span>{assignment && <span className="scheduled-tag"><Check size={13} /> Day {assignment.day.dayNumber} · {assignment.item.startTime}</span>}{managerMode && <div className="item-admin-actions"><button className="small-icon-button" aria-label="編輯餐廳" onClick={onEdit}><Pencil size={15} /></button><button className="small-icon-button danger" aria-label="刪除餐廳" onClick={onDelete}><Trash2 size={15} /></button></div>}</div>
+      <div className="restaurant-card-topline"><span className="category-tag">{restaurant.category}</span>{assignment && <span className="scheduled-tag"><Check size={13} /> Day {assignment.day.dayNumber} · {formatMonthDay(assignment.day.date)} · {assignment.item.startTime}</span>}{managerMode && <div className="item-admin-actions"><button className="small-icon-button" aria-label="編輯餐廳" onClick={onEdit}><Pencil size={15} /></button><button className="small-icon-button danger" aria-label="刪除餐廳" onClick={onDelete}><Trash2 size={15} /></button></div>}</div>
       <h2>{restaurant.name}</h2>
       <div className="restaurant-details"><div className="detail-line"><MapPin size={16} /><span>{restaurant.address ?? "地址待補資料"}</span></div><div className="detail-line"><Clock3 size={16} /><span>{restaurant.businessHours ?? "營業時間待補資料"}</span></div><div className="detail-line"><Map size={16} /><span>{restaurant.area ?? "所在區域待補資料"}</span></div></div>
       {restaurant.notes && <p className="item-notes">{restaurant.notes}</p>}
-      <div className="restaurant-actions"><AmapButton title={restaurant.name} address={restaurant.address} /><button className="text-action" onClick={() => openMeituan(restaurant.name)}><Search size={15} />美團搜尋</button>{!assignment && <button className="text-action strong-action" onClick={onAddToSchedule}><Plus size={15} />加入行程</button>}</div>
+      <div className="restaurant-actions"><AmapButton title={restaurant.name} address={restaurant.address} /><AddressActions address={restaurant.address} phone={restaurant.phone} /><button className="text-action" onClick={() => openMeituan(restaurant.name)}><Search size={15} />美團搜尋</button>{!assignment && <button className="text-action strong-action" onClick={onAddToSchedule}><Plus size={15} />加入行程</button>}{assignment && managerMode && <button className="text-action strong-action" onClick={onRemoveFromSchedule}><RotateCcw size={15} />移回備選</button>}</div>
       <button className="copy-search-link" onClick={async () => { const copied = await copyText(restaurant.name); if (copied) window.alert(`已複製「${restaurant.name}」，可貼到美團搜尋。`); }}><Clipboard size={14} />無法開啟美團？一鍵複製名稱</button>
     </article>
   );
@@ -839,7 +884,7 @@ function TripInfoPage({ trip, managerMode, onEdit }: { trip: TripDocument; manag
   return (
     <div className="page-stack trip-page">
       <PageIntro eyebrow="TRIP INFO" title="旅程" description="重要資料集中在這裡，出發前與路上都能快速查看。" action={managerMode ? <button className="secondary-button compact-button" onClick={onEdit}><Pencil size={16} /> 編輯資料</button> : undefined} />
-      <section className="info-card hotel-card"><div className="info-card-icon"><Hotel size={22} /></div><div className="info-card-content"><span className="eyebrow">HOTEL</span><h2>{hotel.name}</h2><p>{hotel.address}</p>{hotel.phone && <p className="contact-line"><span>電話</span><a href={`tel:${hotel.phone}`}>{hotel.phone}</a></p>}<AmapButton title={hotel.name} address={hotel.address} /></div></section>
+      <section className="info-card hotel-card"><div className="info-card-icon"><Hotel size={22} /></div><div className="info-card-content"><span className="eyebrow">HOTEL</span><h2>{hotel.name}</h2><p>{hotel.address}</p>{hotel.phone && <p className="contact-line"><span>電話</span><a href={`tel:${hotel.phone}`}>{hotel.phone}</a></p>}<div className="hotel-actions"><AmapButton title={hotel.name} address={hotel.address} /><AddressActions address={hotel.address} phone={hotel.phone} /></div></div></section>
       <section className="info-card"><div className="info-card-icon flight-icon"><Plane size={22} /></div><div className="info-card-content"><span className="eyebrow">FLIGHTS</span><h2>航班</h2><div className="flight-list">{flights.map((flight) => <div className="flight-row" key={flight.id}><span className="flight-label">{flight.label}</span><div><strong>{flight.flightNumber ?? "航班待補"}</strong><span>{formatDate(flight.date)} · {flight.time}</span><span>{flight.route}</span></div></div>)}</div></div></section>
       <section className="quick-links-card"><div className="section-heading"><div><span className="eyebrow">QUICK NAVIGATION</span><h2>快速導航</h2></div><Navigation size={19} /></div><div className="quick-link-list"><AmapButton title={hotel.name} address={hotel.address} label="飯店高德導航" full /><AmapButton title={trip.info.airport} address={trip.info.airport} label="浦東機場導航" full /><AmapButton title={trip.info.maglevStation} label="龍陽路磁浮站導航" full /></div></section>
       {members.length > 0 && <section className="info-card members-card"><div className="info-card-icon"><Users size={22} /></div><div className="info-card-content"><span className="eyebrow">TRAVEL PARTY</span><h2>成員</h2><div className="member-list">{members.map((member) => <span key={member}>{member}</span>)}</div></div></section>}
@@ -857,6 +902,26 @@ function BottomNavigation({ activePage, onNavigate }: { activePage: Page; onNavi
 
 function AmapButton({ title, address, label = "高德導航", full = false }: { title: string; address?: string; label?: string; full?: boolean }) {
   return <button className={`amap-button ${full ? "is-full" : ""}`} onClick={() => openAmap(title, address)}><Navigation size={15} />{label}<ExternalLink size={13} /></button>;
+}
+
+function AddressActions({ address, phone }: { address?: string; phone?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!address) return;
+    const success = await copyText(address);
+    if (!success) return;
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2200);
+  };
+
+  if (!address && !phone) return null;
+  return (
+    <div className="address-actions">
+      {address && <button className="text-action" onClick={handleCopy}><Clipboard size={15} />{copied ? "已複製地址" : "複製地址"}</button>}
+      {phone && <a className="text-action phone-action" href={`tel:${phone.replace(/[^+\d]/g, "")}`}><PhoneCall size={15} />打電話</a>}
+    </div>
+  );
 }
 
 function TransportChip({ mode }: { mode: TransportMode }) {
@@ -905,9 +970,9 @@ function LockKeyholeIcon() {
 }
 
 function ItemEditorDialog({ day, item, onClose, onSave }: { day: TripDay; item?: ItineraryItem; onClose: () => void; onSave: (item: ItineraryItem) => void }) {
-  const [form, setForm] = useState<ItineraryItem>(() => ({ id: item?.id ?? makeId("item"), startTime: item?.startTime ?? "09:00", endTime: item?.endTime, title: item?.title ?? "", address: item?.address, businessHours: item?.businessHours, duration: item?.duration, transportMode: item?.transportMode, transportNote: item?.transportNote, notes: item?.notes, category: item?.category ?? "行程", flexible: item?.flexible ?? false, completed: item?.completed ?? false, sourceRestaurantId: item?.sourceRestaurantId }));
+  const [form, setForm] = useState<ItineraryItem>(() => ({ id: item?.id ?? makeId("item"), startTime: item?.startTime ?? "09:00", endTime: item?.endTime, title: item?.title ?? "", address: item?.address, phone: item?.phone, businessHours: item?.businessHours, duration: item?.duration, transportMode: item?.transportMode, transportNote: item?.transportNote, notes: item?.notes, category: item?.category ?? "行程", flexible: item?.flexible ?? false, completed: item?.completed ?? false, sourceRestaurantId: item?.sourceRestaurantId }));
   const setField = <K extends keyof ItineraryItem>(field: K, value: ItineraryItem[K]) => setForm((current) => ({ ...current, [field]: value }));
-  return <Modal title={item ? "編輯行程" : "新增行程"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.title.trim()) return; onSave({ ...form, title: form.title.trim(), address: form.address?.trim() || undefined, notes: form.notes?.trim() || undefined }); }}><div className="form-grid two-columns"><label>開始時間<input type="time" value={form.startTime} onChange={(event) => setField("startTime", event.target.value)} required /></label><label>結束時間<input type="time" value={form.endTime ?? ""} onChange={(event) => setField("endTime", event.target.value || undefined)} /></label></div><label>地點名稱<input value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="例如：外灘夜景" required /></label><div className="form-grid two-columns"><label>分類<input value={form.category ?? ""} onChange={(event) => setField("category", event.target.value)} placeholder="景點／餐廳／交通" /></label><label>建議停留時間<input value={form.duration ?? ""} onChange={(event) => setField("duration", event.target.value || undefined)} placeholder="約 60 分鐘" /></label></div><label>地址<input value={form.address ?? ""} onChange={(event) => setField("address", event.target.value || undefined)} placeholder="有地址就能使用高德導航" /></label><label>營業時間<input value={form.businessHours ?? ""} onChange={(event) => setField("businessHours", event.target.value || undefined)} placeholder="例如：24 小時營業" /></label><label>交通方式<select value={form.transportMode ?? ""} onChange={(event) => setField("transportMode", (event.target.value || undefined) as TransportMode | undefined)}><option value="">不指定</option>{Object.entries(TRANSPORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>交通補充<input value={form.transportNote ?? ""} onChange={(event) => setField("transportNote", event.target.value || undefined)} placeholder="例如：地鐵 2 號線" /></label><label>備註<textarea value={form.notes ?? ""} onChange={(event) => setField("notes", event.target.value || undefined)} rows={3} placeholder="給家人的提醒、訂位或外送備註" /></label><label className="check-row"><input type="checkbox" checked={form.flexible ?? false} onChange={(event) => setField("flexible", event.target.checked)} />標記為彈性／留白行程</label><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />儲存到草稿</button></div></form><p className="modal-context">目前編輯：Day {day.dayNumber} · {formatDate(day.date)}</p></Modal>;
+  return <Modal title={item ? "編輯行程" : "新增行程"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.title.trim()) return; onSave({ ...form, title: form.title.trim(), address: form.address?.trim() || undefined, phone: form.phone?.trim() || undefined, notes: form.notes?.trim() || undefined }); }}><div className="form-grid two-columns"><label>開始時間<input type="time" value={form.startTime} onChange={(event) => setField("startTime", event.target.value)} required /></label><label>結束時間<input type="time" value={form.endTime ?? ""} onChange={(event) => setField("endTime", event.target.value || undefined)} /></label></div><label>地點名稱<input value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="例如：外灘夜景" required /></label><div className="form-grid two-columns"><label>分類<input value={form.category ?? ""} onChange={(event) => setField("category", event.target.value)} placeholder="景點／餐廳／交通" /></label><label>建議停留時間<input value={form.duration ?? ""} onChange={(event) => setField("duration", event.target.value || undefined)} placeholder="約 60 分鐘" /></label></div><label>地址<input value={form.address ?? ""} onChange={(event) => setField("address", event.target.value || undefined)} placeholder="有地址就能使用高德導航" /></label><label>電話<input value={form.phone ?? ""} onChange={(event) => setField("phone", event.target.value || undefined)} placeholder="有電話就能一鍵撥號" /></label><label>營業時間<input value={form.businessHours ?? ""} onChange={(event) => setField("businessHours", event.target.value || undefined)} placeholder="例如：24 小時營業" /></label><label>交通方式<select value={form.transportMode ?? ""} onChange={(event) => setField("transportMode", (event.target.value || undefined) as TransportMode | undefined)}><option value="">不指定</option>{Object.entries(TRANSPORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>交通補充<input value={form.transportNote ?? ""} onChange={(event) => setField("transportNote", event.target.value || undefined)} placeholder="例如：地鐵 2 號線" /></label><label>備註<textarea value={form.notes ?? ""} onChange={(event) => setField("notes", event.target.value || undefined)} rows={3} placeholder="給家人的提醒、訂位或外送備註" /></label><label className="check-row"><input type="checkbox" checked={form.flexible ?? false} onChange={(event) => setField("flexible", event.target.checked)} />標記為彈性／留白行程</label><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />儲存到草稿</button></div></form><p className="modal-context">目前編輯：Day {day.dayNumber} · {formatDate(day.date)}</p></Modal>;
 }
 
 function AddRestaurantDialog({ restaurant, days, defaultDay, onClose, onSave }: { restaurant: Restaurant; days: TripDay[]; defaultDay: number; onClose: () => void; onSave: (restaurant: Restaurant, dayId: string, startTime: string, notes: string) => void }) {
@@ -918,9 +983,9 @@ function AddRestaurantDialog({ restaurant, days, defaultDay, onClose, onSave }: 
 }
 
 function RestaurantEditorDialog({ restaurant, onClose, onSave }: { restaurant?: Restaurant; onClose: () => void; onSave: (restaurant: Restaurant) => void }) {
-  const [form, setForm] = useState<Restaurant>(() => ({ id: restaurant?.id ?? makeId("restaurant"), name: restaurant?.name ?? "", category: restaurant?.category ?? "餐廳", address: restaurant?.address, businessHours: restaurant?.businessHours, area: restaurant?.area, notes: restaurant?.notes }));
+  const [form, setForm] = useState<Restaurant>(() => ({ id: restaurant?.id ?? makeId("restaurant"), name: restaurant?.name ?? "", category: restaurant?.category ?? "餐廳", address: restaurant?.address, phone: restaurant?.phone, businessHours: restaurant?.businessHours, area: restaurant?.area, notes: restaurant?.notes }));
   const setField = <K extends keyof Restaurant>(field: K, value: Restaurant[K]) => setForm((current) => ({ ...current, [field]: value }));
-  return <Modal title={restaurant ? "編輯備選餐廳" : "新增備選餐廳"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.name.trim()) return; onSave({ ...form, name: form.name.trim(), address: form.address?.trim() || undefined, businessHours: form.businessHours?.trim() || undefined, area: form.area?.trim() || undefined, notes: form.notes?.trim() || undefined }); }}><label>餐廳名稱<input value={form.name} onChange={(event) => setField("name", event.target.value)} required /></label><div className="form-grid two-columns"><label>分類<input value={form.category} onChange={(event) => setField("category", event.target.value)} /></label><label>所在區域<input value={form.area ?? ""} onChange={(event) => setField("area", event.target.value || undefined)} /></label></div><label>地址<input value={form.address ?? ""} onChange={(event) => setField("address", event.target.value || undefined)} /></label><label>營業時間<input value={form.businessHours ?? ""} onChange={(event) => setField("businessHours", event.target.value || undefined)} /></label><label>備註<textarea value={form.notes ?? ""} onChange={(event) => setField("notes", event.target.value || undefined)} rows={3} /></label><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />儲存到草稿</button></div></form></Modal>;
+  return <Modal title={restaurant ? "編輯備選餐廳" : "新增備選餐廳"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.name.trim()) return; onSave({ ...form, name: form.name.trim(), address: form.address?.trim() || undefined, phone: form.phone?.trim() || undefined, businessHours: form.businessHours?.trim() || undefined, area: form.area?.trim() || undefined, notes: form.notes?.trim() || undefined }); }}><label>餐廳名稱<input value={form.name} onChange={(event) => setField("name", event.target.value)} required /></label><div className="form-grid two-columns"><label>分類<input value={form.category} onChange={(event) => setField("category", event.target.value)} /></label><label>所在區域<input value={form.area ?? ""} onChange={(event) => setField("area", event.target.value || undefined)} /></label></div><label>地址<input value={form.address ?? ""} onChange={(event) => setField("address", event.target.value || undefined)} /></label><label>電話<input value={form.phone ?? ""} onChange={(event) => setField("phone", event.target.value || undefined)} placeholder="有電話就能一鍵撥號" /></label><label>營業時間<input value={form.businessHours ?? ""} onChange={(event) => setField("businessHours", event.target.value || undefined)} /></label><label>備註<textarea value={form.notes ?? ""} onChange={(event) => setField("notes", event.target.value || undefined)} rows={3} /></label><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />儲存到草稿</button></div></form></Modal>;
 }
 
 function TripInfoEditorDialog({ info, onClose, onSave }: { info: TripInfo; onClose: () => void; onSave: (info: TripInfo) => void }) {

@@ -6,6 +6,7 @@ export interface ItineraryItem {
   endTime?: string;
   title: string;
   address?: string;
+  phone?: string;
   businessHours?: string;
   duration?: string;
   transportMode?: TransportMode;
@@ -41,6 +42,7 @@ export interface Restaurant {
   name: string;
   category: string;
   address?: string;
+  phone?: string;
   businessHours?: string;
   area?: string;
   notes?: string;
