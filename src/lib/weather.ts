@@ -104,13 +104,14 @@ function parseWeatherPayload(payload: OpenMeteoPayload): WeatherSnapshot | null 
     const weatherCode = codes[index];
     if (highC === undefined || lowC === undefined || weatherCode === undefined) return null;
     const precipitationProbability = precipitation?.[index];
-    return {
+    const item: WeatherDay = {
       date: date.slice(0, 10),
       weatherCode,
       highC,
       lowC,
-      precipitationProbability
-    } satisfies WeatherDay;
+      ...(precipitationProbability === undefined ? {} : { precipitationProbability })
+    };
+    return item;
   }).filter((item): item is WeatherDay => item !== null && item.date.length === 10);
 
   return {
