@@ -534,8 +534,11 @@ function App() {
         {activePage === "today" && (
           <TodayPage
             trip={visibleTrip}
+            tasks={visibleTrip.tasks}
             now={now}
             managerMode={managerMode}
+            onToggleTask={toggleTask}
+            onGoToTrip={() => setActivePage("trip")}
             onGoToSchedule={(dayNumber) => {
               setSelectedDay(dayNumber);
               setActivePage("schedule");
@@ -719,13 +722,19 @@ function AppHeader({
 
 function TodayPage({
   trip,
+  tasks,
   now,
   managerMode,
+  onToggleTask,
+  onGoToTrip,
   onGoToSchedule
 }: {
   trip: TripDocument;
+  tasks: TripTask[];
   now: Date;
   managerMode: boolean;
+  onToggleTask: (taskId: string) => void;
+  onGoToTrip: () => void;
   onGoToSchedule: (dayNumber: number) => void;
 }) {
   const reference = resolveReferenceDay(trip.days, now);
@@ -762,6 +771,8 @@ function TodayPage({
           {managerMode && <span className="manager-view-note">目前查看草稿</span>}
         </div>
       </section>
+
+      {isBeforeTrip && <PreTripPreparationCard tasks={tasks} managerMode={managerMode} onToggleTask={onToggleTask} onGoToTrip={onGoToTrip} />}
 
       <section className="live-grid">
         <div className="live-card current-card">
@@ -822,6 +833,31 @@ function TodayPage({
 
       <TransitCard segments={reference.day.transitSegments} compact />
     </div>
+  );
+}
+
+function PreTripPreparationCard({
+  tasks,
+  managerMode,
+  onToggleTask,
+  onGoToTrip
+}: {
+  tasks: TripTask[];
+  managerMode: boolean;
+  onToggleTask: (taskId: string) => void;
+  onGoToTrip: () => void;
+}) {
+  const completed = tasks.filter((task) => task.completed).length;
+  const nextTask = tasks.find((task) => !task.completed);
+  return (
+    <section className="pretrip-card">
+      <div className="pretrip-header"><div className="pretrip-title"><div className="info-card-icon task-icon"><ClipboardCheck size={21} /></div><div><span className="eyebrow">BEFORE YOU GO</span><h2>行前準備</h2><p>{completed} / {tasks.length} 項完成</p></div></div><button className="text-button" onClick={onGoToTrip}>查看清單 <ChevronRight size={16} /></button></div>
+      {nextTask ? (
+        <div className="pretrip-next"><button className="task-check" aria-label={managerMode ? `標記完成：${nextTask.title}` : nextTask.title} disabled={!managerMode} onClick={() => managerMode && onToggleTask(nextTask.id)} /><div><span>下一項準備</span><strong>{nextTask.title}</strong></div>{managerMode && <span className="pretrip-hint">點擊圓圈完成</span>}</div>
+      ) : (
+        <div className="pretrip-complete"><CircleCheck size={20} /><strong>行前準備已全部完成</strong><span>可以安心等待出發。</span></div>
+      )}
+    </section>
   );
 }
 

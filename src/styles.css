@@ -2153,6 +2153,100 @@ code {
   }
 }
 
+/* Pre-trip preparation */
+.pretrip-card {
+  display: grid;
+  gap: 15px;
+  padding: 19px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: var(--radius-lg);
+  background: linear-gradient(145deg, var(--surface) 48%, var(--accent-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.pretrip-header,
+.pretrip-title,
+.pretrip-next,
+.pretrip-complete {
+  display: flex;
+  align-items: center;
+}
+
+.pretrip-header {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.pretrip-title {
+  min-width: 0;
+  gap: 11px;
+}
+
+.pretrip-title > div:last-child {
+  min-width: 0;
+}
+
+.pretrip-title h2 {
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: 21px;
+  letter-spacing: -0.045em;
+}
+
+.pretrip-title p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.pretrip-next {
+  gap: 11px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.pretrip-next > div {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.pretrip-next span,
+.pretrip-hint {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.pretrip-next strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pretrip-hint {
+  flex: 0 0 auto;
+}
+
+.pretrip-complete {
+  gap: 8px;
+  padding: 14px;
+  border-radius: 13px;
+  color: var(--green);
+  background: var(--green-soft);
+  font-size: 12px;
+}
+
+.pretrip-complete span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+
 /* Local travel tools */
 .tool-card,
 .private-tools-section .tool-card {
@@ -2461,6 +2555,29 @@ code {
 }
 
 @media (max-width: 540px) {
+  .pretrip-card {
+    border-radius: 19px;
+    padding: 16px;
+  }
+
+  .pretrip-header {
+    align-items: flex-start;
+  }
+
+  .pretrip-hint {
+    display: none;
+  }
+
+  .pretrip-complete {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .pretrip-complete span {
+    width: 100%;
+    margin-left: 28px;
+  }
+
   .tool-card {
     border-radius: 19px;
     padding: 16px;
