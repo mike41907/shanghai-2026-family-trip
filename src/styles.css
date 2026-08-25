@@ -2232,6 +2232,64 @@ code {
   flex: 0 0 auto;
 }
 
+.pretrip-task-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.pretrip-task-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.pretrip-task-row.is-next {
+  margin-inline: -7px;
+  padding-inline: 7px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--accent-soft) 52%, transparent);
+}
+
+.pretrip-task-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.pretrip-task-copy span,
+.pretrip-task-copy small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pretrip-task-copy strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pretrip-task-row.is-complete .pretrip-task-copy strong {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.pretrip-empty {
+  padding: 13px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .pretrip-complete {
   gap: 8px;
   padding: 14px;

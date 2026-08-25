@@ -921,9 +921,19 @@ function PreTripPreparationCard({
   return (
     <section className="pretrip-card">
       <div className="pretrip-header"><div className="pretrip-title"><div className="info-card-icon task-icon"><ClipboardCheck size={21} /></div><div><span className="eyebrow">BEFORE YOU GO</span><h2>行前準備</h2><p>{completed} / {tasks.length} 項完成</p></div></div><button className="text-button" onClick={onGoToTrip}>{managerMode ? <Pencil size={15} /> : null}{managerMode ? "編輯清單" : "查看清單"} <ChevronRight size={16} /></button></div>
-      {nextTask ? (
-        <div className="pretrip-next"><button className="task-check" aria-label={managerMode ? `標記完成：${nextTask.title}` : nextTask.title} disabled={!managerMode} onClick={() => managerMode && onToggleTask(nextTask.id)} /><div><span>下一項準備</span><strong>{nextTask.title}</strong></div>{managerMode && <span className="pretrip-hint">點擊圓圈完成</span>}</div>
+      {tasks.length > 0 ? (
+        <div className="pretrip-task-list">
+          {tasks.map((task) => (
+            <div className={`pretrip-task-row ${task.completed ? "is-complete" : ""} ${nextTask?.id === task.id ? "is-next" : ""}`} key={task.id}>
+              <button className="task-check" aria-label={managerMode ? `${task.completed ? "取消完成" : "標記完成"}：${task.title}` : task.title} aria-pressed={task.completed} disabled={!managerMode} onClick={() => managerMode && onToggleTask(task.id)}>{task.completed && <Check size={16} />}</button>
+              <div className="pretrip-task-copy"><span>{nextTask?.id === task.id ? "下一項準備" : task.category}</span><strong>{task.title}</strong>{task.notes && <small>{task.notes}</small>}</div>
+            </div>
+          ))}
+        </div>
       ) : (
+        <div className="pretrip-empty">尚未建立行前準備任務。</div>
+      )}
+      {tasks.length > 0 && !nextTask && (
         <div className="pretrip-complete"><CircleCheck size={20} /><strong>行前準備已全部完成</strong><span>可以安心等待出發。</span></div>
       )}
     </section>
