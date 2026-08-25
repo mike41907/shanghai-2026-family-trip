@@ -373,7 +373,7 @@ button:disabled {
 .today-hero {
   position: relative;
   overflow: hidden;
-  padding: 24px;
+  padding: 20px;
   border-radius: var(--radius-xl);
   color: #f3f8fa;
   background: linear-gradient(140deg, #143847 0%, #1b4a5e 62%, #65849a 100%);
@@ -413,7 +413,7 @@ button:disabled {
   z-index: 1;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 38px;
+  margin-top: 25px;
 }
 
 .hero-day {
@@ -448,7 +448,7 @@ button:disabled {
   position: relative;
   z-index: 1;
   justify-content: flex-start;
-  margin-top: 29px;
+  margin-top: 18px;
 }
 
 .status-pill,
@@ -480,15 +480,9 @@ button:disabled {
   background: rgba(234, 179, 103, 0.18);
 }
 
-.hero-countdown,
-.manager-view-note {
+.hero-countdown {
   color: rgba(238, 247, 249, 0.72);
   font-size: 12px;
-}
-
-.manager-view-note {
-  margin-left: auto;
-  color: #f5d39e;
 }
 
 .live-grid {
@@ -2045,21 +2039,17 @@ code {
   }
 
   .today-hero {
-    padding: 20px;
+    padding: 16px 18px;
   }
 
   .hero-mainline {
-    margin-top: 31px;
+    margin-top: 18px;
   }
 
   .hero-footline {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 7px;
-  }
-
-  .manager-view-note {
-    margin-left: 0;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .live-grid {

@@ -837,7 +837,6 @@ function TodayPage({
         <div className="hero-footline">
           <span className={`status-pill ${isBeforeTrip ? "soft" : ""}`}><span className="status-dot" />{statusText}</span>
           {isBeforeTrip && <span className="hero-countdown">距離出發 {formatDistanceUntil(getItemDate(reference.day, reference.day.items[0] ?? { startTime: "00:00" }), now)}</span>}
-          {managerMode && <span className="manager-view-note">目前查看草稿</span>}
         </div>
       </section>
 
