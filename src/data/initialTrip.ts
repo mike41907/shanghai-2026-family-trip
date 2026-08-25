@@ -541,6 +541,7 @@ export const INITIAL_TRIP: TripDocument = {
       {
         id: "flight-return",
         label: "回程",
+        flightNumber: "BR721",
         date: "2026-09-18",
         time: "20:05",
         route: "上海浦東出發 → 桃園"
