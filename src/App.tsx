@@ -23,6 +23,7 @@ import {
   Luggage,
   Map,
   MapPin,
+  MessageCircle,
   Moon,
   Navigation,
   Pencil,
@@ -35,11 +36,14 @@ import {
   Save,
   Search,
   Settings,
+  Send,
+  ShieldAlert,
   Sparkles,
   Sun,
   Trash2,
   Upload,
   Utensils,
+  UserRound,
   Users,
   WalletCards,
   Wind,
@@ -136,6 +140,55 @@ const NAV_ITEMS: Array<{ id: Page; label: string; icon: LucideIcon }> = [
   { id: "eat", label: "想吃", icon: Utensils },
   { id: "trip", label: "旅程", icon: Luggage }
 ];
+
+interface EmergencyContact {
+  name: string;
+  phone: string;
+}
+
+const EMERGENCY_CONTACT_KEY = "shanghai-2026:emergency-contact";
+const SHANGHAI_EMERGENCY_SERVICES = [
+  { number: "110", label: "警方", tone: "police" },
+  { number: "120", label: "急救", tone: "medical" },
+  { number: "119", label: "消防", tone: "fire" }
+] as const;
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/[^+\d]/g, "");
+}
+
+function readEmergencyContact(): EmergencyContact | null {
+  try {
+    const raw = localStorage.getItem(EMERGENCY_CONTACT_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    const candidate = parsed as Partial<EmergencyContact>;
+    const phone = normalizePhone(candidate.phone ?? "");
+    if (typeof candidate.name !== "string" || !candidate.name.trim() || phone.replace(/\D/g, "").length < 6) return null;
+    return { name: candidate.name.trim(), phone };
+  } catch {
+    return null;
+  }
+}
+
+function buildSmsHref(phone: string, message: string): string {
+  const isAppleDevice = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const separator = isAppleDevice ? "&" : "?";
+  return `sms:${normalizePhone(phone)}${separator}body=${encodeURIComponent(message)}`;
+}
+
+function buildEmergencyMessage(trip: TripDocument): string {
+  return [
+    `【${trip.title} 緊急求助】`,
+    "我們目前在上海，遇到緊急狀況，請協助聯絡。",
+    `飯店：${trip.info.hotel.name}`,
+    `飯店地址：${trip.info.hotel.address}`,
+    "目前所在地：請在送出前補充",
+    "目前狀況：",
+    "請回電確認安全。"
+  ].join("\n");
+}
 
 function App() {
   const repository = useMemo(() => new LocalTripRepository(), []);
@@ -819,6 +872,126 @@ function AppHeader({
   );
 }
 
+function EmergencyCard({ trip }: { trip: TripDocument }) {
+  const [contact, setContact] = useState<EmergencyContact | null>(() => readEmergencyContact());
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+
+  const saveContact = (nextContact: EmergencyContact | null) => {
+    try {
+      if (nextContact) {
+        localStorage.setItem(EMERGENCY_CONTACT_KEY, JSON.stringify(nextContact));
+      } else {
+        localStorage.removeItem(EMERGENCY_CONTACT_KEY);
+      }
+    } catch {
+      // The in-memory value still keeps the current screen usable if storage is unavailable.
+    }
+    setContact(nextContact);
+    setContactOpen(false);
+  };
+
+  return (
+    <section className="emergency-card" aria-labelledby="emergency-card-title">
+      <div className="emergency-card-header">
+        <div className="emergency-card-icon"><ShieldAlert size={22} /></div>
+        <div>
+          <span className="eyebrow">SAFETY FIRST</span>
+          <h2 id="emergency-card-title">緊急協助</h2>
+          <p>遇到危險先撥電話；簡訊會先開啟供你確認，不會自動送出。</p>
+        </div>
+      </div>
+
+      <div className="emergency-call-grid" aria-label="上海緊急服務">
+        {SHANGHAI_EMERGENCY_SERVICES.map((service) => (
+          <a className={`emergency-call-button emergency-call-${service.tone}`} key={service.number} href={`tel:${service.number}`} aria-label={`撥打 ${service.number} ${service.label}`}>
+            <PhoneCall size={18} />
+            <strong>{service.number}</strong>
+            <span>{service.label}</span>
+          </a>
+        ))}
+      </div>
+
+      <div className={`emergency-message-actions ${contact ? "" : "is-single"}`}>
+        <button className="emergency-message-button" type="button" onClick={() => contact ? setMessageOpen(true) : setContactOpen(true)}>
+          <MessageCircle size={17} />
+          {contact ? `傳送給 ${contact.name}` : "設定求助聯絡人"}
+        </button>
+        {contact && <button className="emergency-contact-button" type="button" onClick={() => setContactOpen(true)}><UserRound size={16} />修改聯絡人</button>}
+      </div>
+
+      <p className="emergency-card-note">中國大陸：110 警方 · 120 急救 · 119 消防。手機可直接撥號；簡訊需由你最後按下送出。</p>
+
+      {messageOpen && <EmergencyMessageDialog trip={trip} contact={contact} onClose={() => setMessageOpen(false)} onConfigureContact={() => { setMessageOpen(false); setContactOpen(true); }} />}
+      {contactOpen && <EmergencyContactDialog contact={contact} onClose={() => setContactOpen(false)} onSave={saveContact} />}
+    </section>
+  );
+}
+
+function EmergencyMessageDialog({ trip, contact, onClose, onConfigureContact }: { trip: TripDocument; contact: EmergencyContact | null; onClose: () => void; onConfigureContact: () => void }) {
+  const [message, setMessage] = useState(() => buildEmergencyMessage(trip));
+  const [copyLabel, setCopyLabel] = useState("複製求救訊息");
+
+  const handleCopy = async () => {
+    const success = await copyText(message);
+    setCopyLabel(success ? "已複製訊息" : "複製失敗");
+    window.setTimeout(() => setCopyLabel("複製求救訊息"), 2200);
+  };
+
+  const handleShare = async () => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: `${trip.title} 緊急求助`, text: message });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    await handleCopy();
+  };
+
+  return (
+    <Modal title="傳送緊急訊息" onClose={onClose}>
+      <div className="emergency-dialog-content">
+        <div className="emergency-warning"><CircleAlert size={18} /><div><strong>請先確認收件人與內容</strong><span>App 只能開啟手機簡訊或分享面板，不能在背景自動發送。</span></div></div>
+        {contact ? (
+          <>
+            <div className="emergency-recipient"><UserRound size={17} /><div><span>收件人</span><strong>{contact.name} · {contact.phone}</strong></div></div>
+            <label>訊息內容<textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={8} /></label>
+            <div className="emergency-dialog-actions">
+              <button className="secondary-button" type="button" onClick={handleCopy}><Copy size={15} />{copyLabel}</button>
+              <button className="secondary-button" type="button" onClick={handleShare}><Send size={15} />系統分享</button>
+              <a className="primary-button emergency-send-button" href={buildSmsHref(contact.phone, message)} onClick={onClose}><MessageCircle size={15} />開啟簡訊</a>
+            </div>
+            <p className="helper-text">開啟後請在手機訊息 App 內確認收件人，再按「送出」。若簡訊無法使用，可先複製內容改用 LINE／微信等聯絡家人。</p>
+          </>
+        ) : (
+          <div className="emergency-no-contact"><UserRound size={22} /><strong>尚未設定求助聯絡人</strong><p>聯絡人只會保存在這台裝置，不會寫入公開旅程檔案。</p><button className="primary-button" type="button" onClick={onConfigureContact}>設定聯絡人</button></div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+function EmergencyContactDialog({ contact, onClose, onSave }: { contact: EmergencyContact | null; onClose: () => void; onSave: (contact: EmergencyContact | null) => void }) {
+  const [name, setName] = useState(contact?.name ?? "");
+  const [phone, setPhone] = useState(contact?.phone ?? "");
+  const normalizedPhone = normalizePhone(phone);
+  const canSave = Boolean(name.trim()) && normalizedPhone.replace(/\D/g, "").length >= 6;
+
+  return (
+    <Modal title="設定求助聯絡人" onClose={onClose}>
+      <form className="form-stack emergency-contact-form" onSubmit={(event: FormEvent) => { event.preventDefault(); if (canSave) onSave({ name: name.trim(), phone: normalizedPhone }); }}>
+        <p className="helper-text">只保存在目前裝置的瀏覽器，不會發布到 GitHub，也不會出現在家人的公開行程檔案。</p>
+        <label>稱呼<input value={name} onChange={(event) => setName(event.target.value)} placeholder="例如：家人／朋友" autoComplete="name" required /></label>
+        <label>手機號碼<input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="例如：+886 912 345 678" inputMode="tel" autoComplete="tel" required /></label>
+        {contact && <button className="text-action danger-action" type="button" onClick={() => onSave(null)}>清除這台裝置的聯絡人</button>}
+        <div className="modal-actions"><button className="secondary-button" type="button" onClick={onClose}>取消</button><button className="primary-button" type="submit" disabled={!canSave}><Save size={16} />儲存</button></div>
+      </form>
+    </Modal>
+  );
+}
+
 function TodayPage({
   trip,
   tasks,
@@ -869,6 +1042,8 @@ function TodayPage({
           {isBeforeTrip && <span className="hero-countdown">距離出發 {formatDistanceUntil(getItemDate(reference.day, reference.day.items[0] ?? { startTime: "00:00" }), now)}</span>}
         </div>
       </section>
+
+      <EmergencyCard trip={trip} />
 
       <WeatherCard targetDate={reference.day.date} />
 

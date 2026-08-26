@@ -391,6 +391,153 @@ button:disabled {
   box-shadow: 0 20px 42px rgba(17, 57, 73, 0.2);
 }
 
+.emergency-card {
+  display: grid;
+  gap: 0;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--danger) 32%, var(--line));
+  border-radius: var(--radius-lg);
+  background: linear-gradient(145deg, var(--surface) 35%, var(--danger-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.emergency-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.emergency-card-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger-soft) 72%, var(--surface));
+}
+
+.emergency-card-header > div:last-child {
+  min-width: 0;
+}
+
+.emergency-card h2 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 22px;
+  letter-spacing: -0.045em;
+}
+
+.emergency-card-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.emergency-call-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.emergency-call-button {
+  display: grid;
+  min-height: 76px;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  padding: 9px 5px;
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, var(--line));
+  border-radius: 13px;
+  color: var(--danger);
+  background: var(--surface);
+  text-decoration: none;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.emergency-call-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--danger);
+  box-shadow: var(--shadow-soft);
+}
+
+.emergency-call-button strong {
+  font-size: 20px;
+  letter-spacing: -0.04em;
+}
+
+.emergency-call-button span {
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.emergency-call-medical {
+  color: var(--green);
+  border-color: color-mix(in srgb, var(--green) 28%, var(--line));
+}
+
+.emergency-call-fire {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+}
+
+.emergency-message-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.emergency-message-actions.is-single {
+  grid-template-columns: 1fr;
+}
+
+.emergency-message-button,
+.emergency-contact-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.emergency-message-button {
+  border: 1px solid var(--danger);
+  color: #fff;
+  background: var(--danger);
+  box-shadow: 0 7px 14px color-mix(in srgb, var(--danger) 22%, transparent);
+}
+
+.emergency-message-button:hover {
+  filter: brightness(0.96);
+  transform: translateY(-1px);
+}
+
+.emergency-contact-button {
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, var(--line));
+  color: var(--danger);
+  background: var(--surface);
+}
+
+.emergency-contact-button:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.emergency-card-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
 .today-hero::after {
   position: absolute;
   right: -70px;
@@ -1836,6 +1983,125 @@ code {
   margin: -8px 20px 18px;
 }
 
+.emergency-dialog-content {
+  display: grid;
+  gap: 13px;
+  padding: 18px 20px 20px;
+}
+
+.emergency-warning,
+.emergency-recipient {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px;
+  border-radius: 12px;
+}
+
+.emergency-warning {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.emergency-warning > div,
+.emergency-recipient > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.emergency-warning strong,
+.emergency-recipient strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.emergency-warning span,
+.emergency-recipient span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.emergency-recipient {
+  color: var(--brand);
+  background: var(--surface-tint);
+}
+
+.emergency-dialog-content label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.emergency-dialog-content textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 156px;
+  padding: 10px 11px;
+  resize: vertical;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  outline: 0;
+  color: var(--ink);
+  background: var(--surface-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.emergency-dialog-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.emergency-dialog-actions .primary-button,
+.emergency-dialog-actions .secondary-button {
+  min-height: 40px;
+}
+
+.emergency-send-button {
+  flex: 1 1 150px;
+  text-decoration: none;
+}
+
+.emergency-dialog-actions .secondary-button {
+  flex: 0 1 auto;
+}
+
+.emergency-no-contact {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px 8px 4px;
+  color: var(--danger);
+  text-align: center;
+}
+
+.emergency-no-contact strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.emergency-no-contact p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.emergency-no-contact .primary-button {
+  margin-top: 3px;
+}
+
+.danger-action {
+  justify-self: start;
+  color: var(--danger) !important;
+}
+
 .traffic-dialog-content {
   padding: 18px 20px 20px;
 }
@@ -2089,6 +2355,7 @@ code {
   }
 
   .today-hero,
+  .emergency-card,
   .weather-card,
   .live-card,
   .day-overview-card,
