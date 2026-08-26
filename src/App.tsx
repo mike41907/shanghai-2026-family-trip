@@ -23,6 +23,7 @@ import {
   Luggage,
   Map,
   MapPin,
+  Maximize2,
   MessageCircle,
   Moon,
   Navigation,
@@ -992,6 +993,21 @@ function EmergencyContactDialog({ contact, onClose, onSave }: { contact: Emergen
   );
 }
 
+function TodayMapLauncher() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button className="today-map-launcher" type="button" onClick={() => setIsOpen(true)} aria-label="開啟全螢幕上海地鐵圖">
+        <span className="today-map-launcher-icon"><Map size={22} /></span>
+        <span className="today-map-launcher-copy"><strong>上海地鐵圖</strong><small>2024 官方版 · 點擊全螢幕查看</small></span>
+        <ChevronRight size={20} />
+      </button>
+      {isOpen && <MetroMapFullscreen onClose={() => setIsOpen(false)} />}
+    </>
+  );
+}
+
 function TodayPage({
   trip,
   tasks,
@@ -1044,6 +1060,8 @@ function TodayPage({
       </section>
 
       <EmergencyCard trip={trip} />
+
+      <TodayMapLauncher />
 
       <WeatherCard targetDate={reference.day.date} />
 
@@ -1485,40 +1503,93 @@ const SHANGHAI_METRO_MAP_ASSET = `${import.meta.env.BASE_URL}assets/shanghai-met
 
 function MetroMapCard() {
   const [zoom, setZoom] = useState(1);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   const changeZoom = (amount: number) => {
     setZoom((current) => Math.min(2.5, Math.max(1, Number((current + amount).toFixed(1)))));
   };
 
   return (
-    <section className="metro-map-card">
-      <div className="section-heading">
-        <div><span className="eyebrow">METRO MAP</span><h2>上海地鐵圖</h2><p className="section-description">2024 官方路線圖已內建，可放大、縮小與滑動查看。</p></div>
-        <Map size={21} />
-      </div>
-      <div className="metro-map-viewer">
-        <div className="metro-map-canvas" style={{ width: `${zoom * 100}%` }}>
-          <img src={SHANGHAI_METRO_MAP_ASSET} alt="上海軌道交通網絡示意圖（2024 官方版）" loading="lazy" />
+    <>
+      <section className="metro-map-card">
+        <div className="section-heading">
+          <div><span className="eyebrow">METRO MAP</span><h2>上海地鐵圖</h2><p className="section-description">2024 官方路線圖已內建，可放大、縮小與滑動查看。</p></div>
+          <div className="metro-map-heading-actions"><button className="metro-map-open-button" type="button" onClick={() => setFullscreenOpen(true)}><Maximize2 size={15} /><span>全螢幕</span></button><Map size={21} /></div>
+        </div>
+        <div className="metro-map-viewer">
+          <div className="metro-map-canvas" style={{ width: `${zoom * 100}%` }}>
+            <img src={SHANGHAI_METRO_MAP_ASSET} alt="上海軌道交通網絡示意圖（2024 官方版）" loading="lazy" />
+          </div>
+        </div>
+        <div className="metro-map-controls" aria-label="地鐵圖縮放控制">
+          <button type="button" className="metro-map-control" onClick={() => changeZoom(-0.5)} disabled={zoom <= 1} aria-label="縮小地鐵圖">−</button>
+          <span>{Math.round(zoom * 100)}%</span>
+          <button type="button" className="metro-map-control" onClick={() => changeZoom(0.5)} disabled={zoom >= 2.5} aria-label="放大地鐵圖">＋</button>
+          <button type="button" className="metro-map-reset" onClick={() => setZoom(1)}>重設</button>
+        </div>
+        <a className="metro-map-button" href={OFFICIAL_SHANGHAI_METRO_MAP_URL} target="_blank" rel="noreferrer">
+          <span><ExternalLink size={15} /> 查看官方更新頁</span>
+          <small>內建版本：2024</small>
+        </a>
+        <div className="metro-route-heading"><strong>本次行程會用到</strong><span>快速看轉乘</span></div>
+        <div className="metro-route-list">
+          <div className="metro-route-row"><span className="metro-line-badge maglev">磁浮</span><div><strong>浦東機場 ↔ 龍陽路</strong><span>Day 1 抵達、Day 5 回機場</span></div></div>
+          <div className="metro-route-row"><span className="metro-line-badge line-2">2 號線</span><div><strong>南京東路站 → 虹橋火車站</strong><span>Day 3 前往朱家角的第一段地鐵</span></div></div>
+          <div className="metro-route-row"><span className="metro-line-badge line-17">17 號線</span><div><strong>虹橋火車站 → 朱家角站</strong><span>Day 3 下車後再搭滴滴到古鎮</span></div></div>
+        </div>
+        <p className="metro-map-note">地圖來源：上海申通地鐵集團 2024 官方路線圖。圖檔已內建並加入離線快取；官方更新頁需要網路。</p>
+      </section>
+      {fullscreenOpen && <MetroMapFullscreen onClose={() => setFullscreenOpen(false)} />}
+    </>
+  );
+}
+
+function MetroMapFullscreen({ onClose }: { onClose: () => void }) {
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const orientation = typeof screen !== "undefined"
+      ? screen.orientation as ScreenOrientation & { lock?: (orientation: "landscape") => Promise<void>; unlock?: () => void }
+      : undefined;
+    if (orientation?.lock) {
+      void orientation.lock("landscape").catch(() => undefined);
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      orientation?.unlock?.();
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  const changeZoom = (amount: number) => {
+    setZoom((current) => Math.min(2.5, Math.max(1, Number((current + amount).toFixed(1)))));
+  };
+
+  return (
+    <div className="metro-map-fullscreen" role="dialog" aria-modal="true" aria-labelledby="metro-map-fullscreen-title">
+      <div className="metro-map-fullscreen-header">
+        <div className="metro-map-fullscreen-title"><Map size={21} /><div><h2 id="metro-map-fullscreen-title">上海地鐵圖</h2><span>2024 官方版</span></div></div>
+        <div className="metro-map-fullscreen-controls" aria-label="全螢幕地鐵圖控制">
+          <button type="button" className="metro-map-fullscreen-control" onClick={() => changeZoom(-0.5)} disabled={zoom <= 1} aria-label="縮小地鐵圖">−</button>
+          <span>{Math.round(zoom * 100)}%</span>
+          <button type="button" className="metro-map-fullscreen-control" onClick={() => changeZoom(0.5)} disabled={zoom >= 2.5} aria-label="放大地鐵圖">＋</button>
+          <button type="button" className="metro-map-fullscreen-control metro-map-fullscreen-reset" onClick={() => setZoom(1)}>重設</button>
+          <button type="button" className="metro-map-fullscreen-close" onClick={onClose}><X size={17} /><span>關閉</span></button>
         </div>
       </div>
-      <div className="metro-map-controls" aria-label="地鐵圖縮放控制">
-        <button type="button" className="metro-map-control" onClick={() => changeZoom(-0.5)} disabled={zoom <= 1} aria-label="縮小地鐵圖">−</button>
-        <span>{Math.round(zoom * 100)}%</span>
-        <button type="button" className="metro-map-control" onClick={() => changeZoom(0.5)} disabled={zoom >= 2.5} aria-label="放大地鐵圖">＋</button>
-        <button type="button" className="metro-map-reset" onClick={() => setZoom(1)}>重設</button>
+      <div className="metro-map-fullscreen-body">
+        <div className="metro-map-fullscreen-canvas" style={{ width: `${zoom * 100}%` }}>
+          <img src={SHANGHAI_METRO_MAP_ASSET} alt="上海軌道交通網絡示意圖（2024 官方版）" draggable="false" />
+        </div>
       </div>
-      <a className="metro-map-button" href={OFFICIAL_SHANGHAI_METRO_MAP_URL} target="_blank" rel="noreferrer">
-        <span><ExternalLink size={15} /> 查看官方更新頁</span>
-        <small>內建版本：2024</small>
-      </a>
-      <div className="metro-route-heading"><strong>本次行程會用到</strong><span>快速看轉乘</span></div>
-      <div className="metro-route-list">
-        <div className="metro-route-row"><span className="metro-line-badge maglev">磁浮</span><div><strong>浦東機場 ↔ 龍陽路</strong><span>Day 1 抵達、Day 5 回機場</span></div></div>
-        <div className="metro-route-row"><span className="metro-line-badge line-2">2 號線</span><div><strong>南京東路站 → 虹橋火車站</strong><span>Day 3 前往朱家角的第一段地鐵</span></div></div>
-        <div className="metro-route-row"><span className="metro-line-badge line-17">17 號線</span><div><strong>虹橋火車站 → 朱家角站</strong><span>Day 3 下車後再搭滴滴到古鎮</span></div></div>
-      </div>
-      <p className="metro-map-note">地圖來源：上海申通地鐵集團 2024 官方路線圖。圖檔已內建並加入離線快取；官方更新頁需要網路。</p>
-    </section>
+      <div className="metro-map-fullscreen-footer"><span className="metro-map-orientation-hint">請將手機旋轉橫向查看；若裝置不支援自動旋轉，仍可滑動地圖。</span><span>可左右滑動查看 · 離線可用</span></div>
+    </div>
   );
 }
 
