@@ -1,5 +1,5 @@
-const CACHE_NAME = "shanghai-2026-shell-v1.0.0";
-const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./trip.json"];
+const CACHE_NAME = "shanghai-2026-shell-v1.1.0";
+const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./assets/shanghai-metro-map-2024.jpg", "./trip.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

@@ -2755,6 +2755,70 @@ code {
   transform: translateY(-1px);
 }
 
+.metro-map-button small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.metro-map-viewer {
+  overflow: auto;
+  max-height: min(68vh, 640px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.metro-map-canvas {
+  min-width: 100%;
+  transition: width 160ms ease;
+}
+
+.metro-map-canvas img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.metro-map-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.metro-map-control,
+.metro-map-reset {
+  min-width: 34px;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  font-weight: 800;
+}
+
+.metro-map-control {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.metro-map-reset {
+  padding: 0 9px;
+  font-size: 10px;
+}
+
+.metro-map-control:hover:not(:disabled),
+.metro-map-reset:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-tint);
+}
+
 .metro-route-heading {
   display: flex;
   align-items: baseline;
