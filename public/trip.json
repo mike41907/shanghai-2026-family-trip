@@ -302,8 +302,18 @@
       "dayNumber": 3,
       "date": "2026-09-16",
       "title": "朱家角＋游沐日記",
-      "overview": "以地鐵與 17 號線前往朱家角古鎮，下午回市區泡湯、汗蒸與休息。",
+      "overview": "早餐後以地鐵與 17 號線前往朱家角古鎮，下午回市區泡湯、汗蒸與休息。",
       "items": [
+        {
+          "id": "d3-breakfast",
+          "startTime": "07:30",
+          "title": "飯店早餐或附近麵店",
+          "endTime": "08:15",
+          "category": "早餐",
+          "flexible": true,
+          "duration": "約 45 分鐘",
+          "notes": "飯店早餐或依當天方便選擇附近麵店；08:30 出發前往南京東路站。"
+        },
         {
           "id": "d3-hotel-leave",
           "startTime": "08:30",
@@ -323,7 +333,7 @@
         },
         {
           "id": "d3-metro-2",
-          "startTime": "08:40",
+          "startTime": "08:50",
           "title": "地鐵 2 號線 → 虹橋火車站",
           "category": "交通",
           "transportMode": "metro",
@@ -585,7 +595,7 @@
       "dayNumber": 5,
       "date": "2026-09-18",
       "title": "本幫菜・磁浮・浦東機場",
-      "overview": "上午從容退房寄放行李，中午吃本幫菜，下午取行李後搭磁浮前往浦東機場。",
+      "overview": "上午從容退房寄放行李，中午吃本幫菜，16:00 從飯店搭車後轉磁浮前往浦東機場。",
       "items": [
         {
           "id": "d5-breakfast",
@@ -639,19 +649,21 @@
           "startTime": "14:30",
           "title": "回飯店取行李",
           "category": "住宿／行李",
-          "address": "上海市黃浦區北京東路398號"
+          "address": "上海市黃浦區北京東路398號",
+          "notes": "取回行李後在飯店附近休息，16:00 再搭車前往龍陽路。"
         },
         {
           "id": "d5-to-longyang",
-          "startTime": "15:00",
+          "startTime": "16:00",
           "title": "滴滴 → 龍陽路磁浮站",
           "category": "交通",
           "transportMode": "taxi",
-          "transportNote": "飯店 → 龍陽路磁浮站。"
+          "transportNote": "16:00 從飯店搭車；飯店 → 龍陽路磁浮站，依路況約 30 分鐘。",
+          "duration": "約 30 分鐘"
         },
         {
           "id": "d5-maglev",
-          "startTime": "15:30",
+          "startTime": "16:30",
           "title": "龍陽路 → 上海磁浮 → 浦東國際機場",
           "category": "交通",
           "transportMode": "maglev",
@@ -659,11 +671,11 @@
         },
         {
           "id": "d5-airport",
-          "startTime": "16:00",
+          "startTime": "17:00",
           "title": "抵達浦東機場",
           "category": "機場",
           "address": "上海浦東國際機場",
-          "notes": "預留報到、安檢與退稅／採買時間。"
+          "notes": "預計 17:00 抵達，預留報到、安檢與退稅／採買時間。"
         },
         {
           "id": "d5-flight-home",
@@ -697,8 +709,8 @@
           "from": "飯店",
           "to": "龍陽路磁浮站",
           "mode": "taxi",
-          "detail": "滴滴",
-          "duration": "依路況"
+          "detail": "滴滴（16:00 出發）",
+          "duration": "約 30 分鐘"
         },
         {
           "id": "d5-t4",

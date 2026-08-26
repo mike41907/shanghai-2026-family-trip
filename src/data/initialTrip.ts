@@ -348,8 +348,15 @@ export const INITIAL_TRIP: TripDocument = {
       3,
       "2026-09-16",
       "朱家角＋游沐日記",
-      "以地鐵與 17 號線前往朱家角古鎮，下午回市區泡湯、汗蒸與休息。",
+      "早餐後以地鐵與 17 號線前往朱家角古鎮，下午回市區泡湯、汗蒸與休息。",
       [
+        item("d3-breakfast", "07:30", "飯店早餐或附近麵店", {
+          endTime: "08:15",
+          category: "早餐",
+          flexible: true,
+          duration: "約 45 分鐘",
+          notes: "飯店早餐或依當天方便選擇附近麵店；08:30 出發前往南京東路站。"
+        }),
         item("d3-hotel-leave", "08:30", "飯店出發", {
           category: "交通",
           address: "上海市黃浦區北京東路398號",
@@ -361,7 +368,7 @@ export const INITIAL_TRIP: TripDocument = {
           transportMode: "walk",
           notes: "飯店 → 南京東路站。"
         }),
-        item("d3-metro-2", "08:40", "地鐵 2 號線 → 虹橋火車站", {
+        item("d3-metro-2", "08:50", "地鐵 2 號線 → 虹橋火車站", {
           category: "交通",
           transportMode: "metro",
           transportNote: "南京東路站搭地鐵 2 號線。"
@@ -492,7 +499,7 @@ export const INITIAL_TRIP: TripDocument = {
       5,
       "2026-09-18",
       "本幫菜・磁浮・浦東機場",
-      "上午從容退房寄放行李，中午吃本幫菜，下午取行李後搭磁浮前往浦東機場。",
+      "上午從容退房寄放行李，中午吃本幫菜，16:00 從飯店搭車後轉磁浮前往浦東機場。",
       [
         item("d5-breakfast", "08:30", "早餐＋整理行李", {
           endTime: "09:30",
@@ -528,22 +535,24 @@ export const INITIAL_TRIP: TripDocument = {
         }),
         item("d5-pick-luggage", "14:30", "回飯店取行李", {
           category: "住宿／行李",
-          address: "上海市黃浦區北京東路398號"
+          address: "上海市黃浦區北京東路398號",
+          notes: "取回行李後在飯店附近休息，16:00 再搭車前往龍陽路。"
         }),
-        item("d5-to-longyang", "15:00", "滴滴 → 龍陽路磁浮站", {
+        item("d5-to-longyang", "16:00", "滴滴 → 龍陽路磁浮站", {
           category: "交通",
           transportMode: "taxi",
-          transportNote: "飯店 → 龍陽路磁浮站。"
+          transportNote: "16:00 從飯店搭車；飯店 → 龍陽路磁浮站，依路況約 30 分鐘。",
+          duration: "約 30 分鐘"
         }),
-        item("d5-maglev", "15:30", "龍陽路 → 上海磁浮 → 浦東國際機場", {
+        item("d5-maglev", "16:30", "龍陽路 → 上海磁浮 → 浦東國際機場", {
           category: "交通",
           transportMode: "maglev",
           transportNote: "搭上海磁浮前往浦東機場；龍陽路 → 浦東約 8 分鐘，營運約 06:45–21:40。"
         }),
-        item("d5-airport", "16:00", "抵達浦東機場", {
+        item("d5-airport", "17:00", "抵達浦東機場", {
           category: "機場",
           address: "上海浦東國際機場",
-          notes: "預留報到、安檢與退稅／採買時間。"
+          notes: "預計 17:00 抵達，預留報到、安檢與退稅／採買時間。"
         }),
         item("d5-flight-home", "20:05", "回程航班起飛", {
           category: "航班",
@@ -555,7 +564,7 @@ export const INITIAL_TRIP: TripDocument = {
       [
         segment("d5-t1", "飯店", "人民廣場店", "walk", "步行或短程接駁", "依體力"),
         segment("d5-t2", "人民廣場", "飯店", "taxi", "回飯店取行李", "依路況"),
-        segment("d5-t3", "飯店", "龍陽路磁浮站", "taxi", "滴滴", "依路況"),
+        segment("d5-t3", "飯店", "龍陽路磁浮站", "taxi", "滴滴（16:00 出發）", "約 30 分鐘"),
         segment("d5-t4", "龍陽路磁浮站", "浦東國際機場", "maglev", "上海磁浮", "約 8 分鐘")
       ]
     )
