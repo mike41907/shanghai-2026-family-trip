@@ -2357,6 +2357,7 @@ code {
   .today-hero,
   .emergency-card,
   .weather-card,
+  .today-expense-card,
   .live-card,
   .day-overview-card,
   .transit-card,
@@ -2386,6 +2387,16 @@ code {
 
   .live-card {
     min-height: 0;
+  }
+
+  .today-expense-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .expense-quick-add {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .day-tabs {
@@ -2614,6 +2625,90 @@ code {
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 5px var(--accent-soft);
+}
+
+/* Prominent manager-only expense entry */
+.today-expense-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+  border-radius: var(--radius-lg);
+  background: linear-gradient(145deg, var(--surface) 42%, var(--accent-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.today-expense-heading,
+.today-expense-title,
+.today-expense-actions,
+.today-expense-total {
+  display: flex;
+  align-items: center;
+}
+
+.today-expense-heading {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.today-expense-title {
+  min-width: 0;
+  gap: 11px;
+}
+
+.today-expense-title > div:last-child {
+  min-width: 0;
+}
+
+.today-expense-title h2 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 22px;
+  letter-spacing: -0.045em;
+}
+
+.today-expense-title p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.today-expense-count {
+  flex: 0 0 auto;
+  padding: 7px 9px;
+  border-radius: 999px;
+  color: var(--brand-deep);
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.today-expense-total {
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+}
+
+.today-expense-total > span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.today-expense-total strong {
+  color: var(--ink);
+  font-size: 27px;
+  letter-spacing: -0.06em;
+}
+
+.today-expense-actions {
+  gap: 8px;
+}
+
+.today-expense-actions > button {
+  flex: 1;
+  justify-content: center;
 }
 
 /* Pre-trip preparation */
@@ -3391,6 +3486,7 @@ code {
 
 .private-tool-card {
   min-width: 0;
+  grid-column: 1 / -1;
 }
 
 .tool-header-actions {
@@ -3414,6 +3510,16 @@ code {
   padding: 13px;
   border-radius: 13px;
   background: var(--surface-soft);
+}
+
+.expense-total > div {
+  display: grid;
+  gap: 2px;
+}
+
+.expense-total > div > span {
+  color: var(--muted);
+  font-size: 10px;
 }
 
 .expense-total strong {
@@ -3443,6 +3549,75 @@ code {
   font-weight: 700;
 }
 
+.expense-payer-breakdown {
+  margin-top: 6px;
+}
+
+.expense-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.expense-filter > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.expense-filter button {
+  flex: 0 0 auto;
+  min-height: 29px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.expense-filter button.is-selected {
+  border-color: var(--brand);
+  color: #fff;
+  background: var(--brand);
+}
+
+.expense-quick-add {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.expense-quick-add > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.expense-quick-add > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.expense-quick-add button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 999px;
+  color: var(--brand-deep);
+  background: var(--accent-soft);
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .expense-row,
 .attachment-row {
   min-width: 0;
@@ -3456,6 +3631,10 @@ code {
   color: var(--accent);
   font-size: 13px;
   white-space: nowrap;
+}
+
+.expense-copy small {
+  white-space: normal;
 }
 
 .expense-row .item-admin-actions,

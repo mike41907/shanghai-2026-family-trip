@@ -1,6 +1,7 @@
 import { makeId } from "./utils";
 
-export type ExpenseCategory = "餐飲" | "交通" | "住宿" | "門票" | "購物" | "其他";
+export type ExpenseCategory = "餐飲" | "交通" | "住宿" | "機票" | "門票" | "購物" | "其他";
+export type ExpensePaymentMethod = "現金" | "支付寶" | "微信支付" | "美團" | "信用卡" | "其他";
 
 export interface ExpenseRecord {
   id: string;
@@ -9,6 +10,8 @@ export interface ExpenseRecord {
   amountCny: number;
   payer: string;
   category: ExpenseCategory;
+  paymentMethod?: ExpensePaymentMethod;
+  dayNumber?: number;
   note?: string;
   createdAt: string;
 }
@@ -49,20 +52,25 @@ function readExpenses(): ExpenseRecord[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((item): item is ExpenseRecord => {
-      if (!item || typeof item !== "object") return false;
-      const candidate = item as Partial<ExpenseRecord>;
-      return typeof candidate.id === "string" &&
-        typeof candidate.date === "string" &&
-        typeof candidate.title === "string" &&
-        typeof candidate.amountCny === "number" &&
-        Number.isFinite(candidate.amountCny) &&
-        typeof candidate.payer === "string" &&
-        typeof candidate.category === "string";
-    });
+    return parsed.filter(isExpenseRecord);
   } catch {
     return [];
   }
+}
+
+export function isExpenseRecord(value: unknown): value is ExpenseRecord {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<ExpenseRecord>;
+  return typeof candidate.id === "string" &&
+    typeof candidate.date === "string" &&
+    typeof candidate.title === "string" &&
+    typeof candidate.amountCny === "number" &&
+    Number.isFinite(candidate.amountCny) &&
+    candidate.amountCny > 0 &&
+    typeof candidate.payer === "string" &&
+    typeof candidate.category === "string" &&
+    (candidate.paymentMethod === undefined || typeof candidate.paymentMethod === "string") &&
+    (candidate.dayNumber === undefined || (typeof candidate.dayNumber === "number" && Number.isInteger(candidate.dayNumber)));
 }
 
 function writeExpenses(expenses: ExpenseRecord[]): void {
@@ -183,12 +191,14 @@ function csvCell(value: string | number): string {
 
 export function expensesToCsv(expenses: ExpenseRecord[]): string {
   const rows = [
-    ["日期", "項目", "金額（人民幣）", "付款人", "分類", "備註"],
+    ["日期", "行程日", "項目", "金額（人民幣）", "付款人", "付款方式", "分類", "備註"],
     ...[...expenses].sort((a, b) => a.date.localeCompare(b.date)).map((expense) => [
       expense.date,
+      expense.dayNumber ? `Day ${expense.dayNumber}` : "",
       expense.title,
       expense.amountCny.toFixed(2),
       expense.payer,
+      expense.paymentMethod ?? "未填寫",
       expense.category,
       expense.note ?? ""
     ])

@@ -1,4 +1,4 @@
-const CACHE_NAME = "shanghai-2026-shell-v1.3.0";
+const CACHE_NAME = "shanghai-2026-shell-v1.3.1";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./assets/shanghai-metro-map-2024.jpg", "./trip.json"];
 
 self.addEventListener("install", (event) => {
@@ -37,5 +37,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
+  event.respondWith(
+    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+      }
+      return response;
+    }).catch(() => caches.match(event.request)))
+  );
 });

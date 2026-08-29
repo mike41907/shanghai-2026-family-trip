@@ -57,11 +57,13 @@ import { LocalTripRepository, withInitialVersion } from "./lib/repository";
 import {
   expensesToCsv,
   formatFileSize,
+  isExpenseRecord,
   LocalTravelToolsRepository,
   summarizeExpenses,
   type AttachmentCategory,
   type AttachmentMeta,
   type ExpenseCategory,
+  type ExpensePaymentMethod,
   type ExpenseRecord,
   type TravelToolsData
 } from "./lib/travelTools";
@@ -134,6 +136,8 @@ interface OcrReviewState {
   result: PaymentOcrResult;
   expense: ExpenseRecord;
 }
+
+type ExpensePreset = Partial<Pick<ExpenseRecord, "title" | "category" | "paymentMethod" | "dayNumber">>;
 
 const NAV_ITEMS: Array<{ id: Page; label: string; icon: LucideIcon }> = [
   { id: "today", label: "今天", icon: Sun },
@@ -217,6 +221,7 @@ function App() {
   const [editingInfo, setEditingInfo] = useState(false);
   const [editingTask, setEditingTask] = useState<TripTask | null | undefined>(undefined);
   const [editingExpense, setEditingExpense] = useState<ExpenseRecord | null | undefined>(undefined);
+  const [expensePreset, setExpensePreset] = useState<ExpensePreset | undefined>(undefined);
   const [ocrProgress, setOcrProgress] = useState<OcrProgressState | null>(null);
   const [ocrReview, setOcrReview] = useState<OcrReviewState | null>(null);
   const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
@@ -224,6 +229,7 @@ function App() {
   const importInputRef = useRef<HTMLInputElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const paymentOcrInputRef = useRef<HTMLInputElement>(null);
+  const expenseImportInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -288,6 +294,11 @@ function App() {
     window.setTimeout(() => {
       document.getElementById("private-travel-tools")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
+  };
+
+  const openExpenseEditor = (preset: ExpensePreset = {}) => {
+    setExpensePreset(preset);
+    setEditingExpense(null);
   };
 
   const handlePublish = (note: string) => {
@@ -504,12 +515,21 @@ function App() {
 
   const saveExpense = (expense: ExpenseRecord) => {
     if (!travelTools) return;
-    const expenses = travelTools.expenses.some((candidate) => candidate.id === expense.id)
-      ? travelTools.expenses.map((candidate) => candidate.id === expense.id ? expense : candidate)
-      : [...travelTools.expenses, expense];
+    const normalizedExpense: ExpenseRecord = {
+      ...expense,
+      title: expense.title.trim(),
+      payer: expense.payer.trim(),
+      amountCny: Number(expense.amountCny.toFixed(2)),
+      paymentMethod: expense.paymentMethod ?? "其他",
+      note: expense.note?.trim() || undefined
+    };
+    const expenses = travelTools.expenses.some((candidate) => candidate.id === normalizedExpense.id)
+      ? travelTools.expenses.map((candidate) => candidate.id === normalizedExpense.id ? normalizedExpense : candidate)
+      : [...travelTools.expenses, normalizedExpense];
     travelToolsRepository.saveExpenses(expenses);
     setTravelTools({ ...travelTools, expenses });
     setEditingExpense(undefined);
+    setExpensePreset(undefined);
     showToast("旅費已保存在本機。", "success");
   };
 
@@ -534,6 +554,7 @@ function App() {
           amountCny: result.amountCny ?? 0,
           payer: "我",
           category: result.source === "美團外送" ? "餐飲" : "其他",
+          paymentMethod: result.source === "支付寶" ? "支付寶" : result.source === "微信支付" ? "微信支付" : result.source === "美團外送" ? "美團" : "其他",
           note: `OCR 辨識：${result.source}${confidenceNote}`,
           createdAt: new Date().toISOString()
         }
@@ -573,6 +594,26 @@ function App() {
     anchor.remove();
     URL.revokeObjectURL(csvUrl);
     showToast("已下載旅費 JSON 與 CSV 統計。", "success");
+  };
+
+  const handleExpenseImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !travelTools) return;
+    try {
+      const parsed: unknown = JSON.parse(await file.text());
+      const candidate = parsed && typeof parsed === "object" && Array.isArray((parsed as { expenses?: unknown }).expenses)
+        ? (parsed as { expenses: unknown[] }).expenses
+        : parsed;
+      if (!Array.isArray(candidate) || !candidate.every(isExpenseRecord)) throw new Error("invalid");
+      const imported = candidate.map((expense) => ({ ...expense, paymentMethod: expense.paymentMethod ?? "其他" as const }));
+      if (!window.confirm(`匯入 ${imported.length} 筆旅費並取代目前本機帳本？`)) return;
+      travelToolsRepository.saveExpenses(imported);
+      setTravelTools({ ...travelTools, expenses: imported });
+      showToast(`已匯入 ${imported.length} 筆旅費。`, "success");
+    } catch {
+      showToast("旅費 JSON 格式無法辨識，請選擇本 App 匯出的旅費檔。", "error");
+    }
   };
 
   const handleAttachmentFile = (event: ChangeEvent<HTMLInputElement>) => {
@@ -660,8 +701,11 @@ function App() {
             tasks={visibleTrip.tasks}
             now={now}
             managerMode={managerMode}
+            travelTools={travelTools}
             onToggleTask={toggleTask}
             onGoToTrip={() => setActivePage("trip")}
+            onAddExpense={() => openExpenseEditor()}
+            onOpenExpenses={openExpenseTools}
             onGoToSchedule={(dayNumber) => {
               setSelectedDay(dayNumber);
               setActivePage("schedule");
@@ -704,11 +748,12 @@ function App() {
             onDeleteTask={deleteTask}
             onToggleTask={toggleTask}
             travelTools={travelTools}
-            onAddExpense={() => setEditingExpense(null)}
+            onAddExpense={openExpenseEditor}
             onEditExpense={setEditingExpense}
             onDeleteExpense={deleteExpense}
             onExportExpenses={exportExpenses}
             onOcrExpense={() => paymentOcrInputRef.current?.click()}
+            onImportExpenses={() => expenseImportInputRef.current?.click()}
             onAddAttachment={() => attachmentInputRef.current?.click()}
             onDownloadAttachment={downloadAttachment}
             onDeleteAttachment={deleteAttachment}
@@ -754,6 +799,7 @@ function App() {
       <input ref={importInputRef} className="visually-hidden" type="file" accept="application/json,.json" onChange={handleImportFile} />
       <input ref={attachmentInputRef} className="visually-hidden" type="file" accept="image/*,.pdf,.png,.jpg,.jpeg" onChange={handleAttachmentFile} />
       <input ref={paymentOcrInputRef} className="visually-hidden" type="file" accept="image/*" onChange={handlePaymentOcrFile} />
+      <input ref={expenseImportInputRef} className="visually-hidden" type="file" accept="application/json,.json" onChange={handleExpenseImportFile} />
 
       {editingItem && (
         <ItemEditorDialog
@@ -792,7 +838,7 @@ function App() {
       )}
 
       {editingExpense !== undefined && (
-        <ExpenseEditorDialog expense={editingExpense ?? undefined} onClose={() => setEditingExpense(undefined)} onSave={saveExpense} />
+        <ExpenseEditorDialog days={visibleTrip.days} preset={expensePreset} expense={editingExpense ?? undefined} onClose={() => { setEditingExpense(undefined); setExpensePreset(undefined); }} onSave={saveExpense} />
       )}
 
       {ocrProgress && <OcrProgressDialog progress={ocrProgress} onClose={() => setOcrProgress(null)} />}
@@ -800,6 +846,7 @@ function App() {
       {ocrReview && (
         <ExpenseEditorDialog
           key={`ocr-${ocrReview.expense.id}`}
+          days={visibleTrip.days}
           expense={ocrReview.expense}
           fileName={ocrReview.fileName}
           ocrResult={ocrReview.result}
@@ -1013,16 +1060,22 @@ function TodayPage({
   tasks,
   now,
   managerMode,
+  travelTools,
   onToggleTask,
   onGoToTrip,
+  onAddExpense,
+  onOpenExpenses,
   onGoToSchedule
 }: {
   trip: TripDocument;
   tasks: TripTask[];
   now: Date;
   managerMode: boolean;
+  travelTools: TravelToolsData | null;
   onToggleTask: (taskId: string) => void;
   onGoToTrip: () => void;
+  onAddExpense: () => void;
+  onOpenExpenses: () => void;
   onGoToSchedule: (dayNumber: number) => void;
 }) {
   const reference = resolveReferenceDay(trip.days, now);
@@ -1064,6 +1117,8 @@ function TodayPage({
       <TodayMapLauncher />
 
       <WeatherCard targetDate={reference.day.date} />
+
+      {managerMode && travelTools && <TodayExpenseCard tools={travelTools} onAdd={onAddExpense} onViewAll={onOpenExpenses} />}
 
       {isBeforeTrip && <PreTripPreparationCard tasks={tasks} managerMode={managerMode} onToggleTask={onToggleTask} onGoToTrip={onGoToTrip} />}
 
@@ -1126,6 +1181,20 @@ function TodayPage({
 
       <TransitCard segments={reference.day.transitSegments} compact />
     </div>
+  );
+}
+
+function TodayExpenseCard({ tools, onAdd, onViewAll }: { tools: TravelToolsData; onAdd: () => void; onViewAll: () => void }) {
+  const summary = summarizeExpenses(tools.expenses);
+  return (
+    <section className="today-expense-card">
+      <div className="today-expense-heading">
+        <div className="today-expense-title"><div className="info-card-icon expense-icon"><WalletCards size={21} /></div><div><span className="eyebrow">TRIP EXPENSES · LOCAL ONLY</span><h2>旅費記帳</h2><p>機票、住宿、餐飲與交通都集中記錄</p></div></div>
+        <div className="today-expense-count">{tools.expenses.length} 筆</div>
+      </div>
+      <div className="today-expense-total"><span>目前人民幣總額</span><strong>¥ {summary.total.toFixed(2)}</strong></div>
+      <div className="today-expense-actions"><button className="primary-button" type="button" onClick={onAdd}><Plus size={16} />新增花費</button><button className="secondary-button" type="button" onClick={onViewAll}><WalletCards size={16} />查看全部記錄</button></div>
+    </section>
   );
 }
 
@@ -1462,6 +1531,7 @@ function TripInfoPage({
   onDeleteExpense,
   onExportExpenses,
   onOcrExpense,
+  onImportExpenses,
   onAddAttachment,
   onDownloadAttachment,
   onDeleteAttachment
@@ -1474,11 +1544,12 @@ function TripInfoPage({
   onDeleteTask: (taskId: string) => void;
   onToggleTask: (taskId: string) => void;
   travelTools: TravelToolsData | null;
-  onAddExpense: () => void;
+  onAddExpense: (preset?: ExpensePreset) => void;
   onEditExpense: (expense: ExpenseRecord) => void;
   onDeleteExpense: (expenseId: string) => void;
   onExportExpenses: () => void;
   onOcrExpense: () => void;
+  onImportExpenses: () => void;
   onAddAttachment: () => void;
   onDownloadAttachment: (attachment: AttachmentMeta) => void;
   onDeleteAttachment: (attachment: AttachmentMeta) => void;
@@ -1493,7 +1564,7 @@ function TripInfoPage({
       <MetroMapCard />
       {members.length > 0 && <section className="info-card members-card"><div className="info-card-icon"><Users size={22} /></div><div className="info-card-content"><span className="eyebrow">TRAVEL PARTY</span><h2>成員</h2><div className="member-list">{members.map((member) => <span key={member}>{member}</span>)}</div></div></section>}
       <TaskChecklist tasks={trip.tasks} managerMode={managerMode} onAdd={onAddTask} onEdit={onEditTask} onDelete={onDeleteTask} onToggle={onToggleTask} />
-      {managerMode && travelTools && <PrivateTravelTools tools={travelTools} onAddExpense={onAddExpense} onEditExpense={onEditExpense} onDeleteExpense={onDeleteExpense} onExportExpenses={onExportExpenses} onOcrExpense={onOcrExpense} onAddAttachment={onAddAttachment} onDownloadAttachment={onDownloadAttachment} onDeleteAttachment={onDeleteAttachment} />}
+      {managerMode && travelTools && <PrivateTravelTools days={trip.days} tools={travelTools} onAddExpense={onAddExpense} onEditExpense={onEditExpense} onDeleteExpense={onDeleteExpense} onExportExpenses={onExportExpenses} onOcrExpense={onOcrExpense} onImportExpenses={onImportExpenses} onAddAttachment={onAddAttachment} onDownloadAttachment={onDownloadAttachment} onDeleteAttachment={onDeleteAttachment} />}
     </div>
   );
 }
@@ -1594,7 +1665,14 @@ function MetroMapFullscreen({ onClose }: { onClose: () => void }) {
 }
 
 const TASK_CATEGORIES: TripTaskCategory[] = ["證件", "網路", "行李", "行程", "返程", "其他"];
-const EXPENSE_CATEGORIES: ExpenseCategory[] = ["餐飲", "交通", "住宿", "門票", "購物", "其他"];
+const EXPENSE_CATEGORIES: ExpenseCategory[] = ["餐飲", "交通", "住宿", "機票", "門票", "購物", "其他"];
+const EXPENSE_PAYMENT_METHODS: ExpensePaymentMethod[] = ["現金", "支付寶", "微信支付", "美團", "信用卡", "其他"];
+const EXPENSE_QUICK_PRESETS: Array<{ label: string; title: string; category: ExpenseCategory }> = [
+  { label: "機票", title: "機票", category: "機票" },
+  { label: "住宿", title: "飯店住宿", category: "住宿" },
+  { label: "餐飲", title: "餐飲", category: "餐飲" },
+  { label: "交通", title: "交通", category: "交通" }
+];
 const ATTACHMENT_CATEGORIES: AttachmentCategory[] = ["機票／登機證", "訂位資訊", "付款 QR Code", "其他"];
 
 function TaskChecklist({
@@ -1635,41 +1713,53 @@ function TaskChecklist({
 }
 
 function PrivateTravelTools({
+  days,
   tools,
   onAddExpense,
   onEditExpense,
   onDeleteExpense,
   onExportExpenses,
   onOcrExpense,
+  onImportExpenses,
   onAddAttachment,
   onDownloadAttachment,
   onDeleteAttachment
 }: {
+  days: TripDay[];
   tools: TravelToolsData;
-  onAddExpense: () => void;
+  onAddExpense: (preset?: ExpensePreset) => void;
   onEditExpense: (expense: ExpenseRecord) => void;
   onDeleteExpense: (expenseId: string) => void;
   onExportExpenses: () => void;
   onOcrExpense: () => void;
+  onImportExpenses: () => void;
   onAddAttachment: () => void;
   onDownloadAttachment: (attachment: AttachmentMeta) => void;
   onDeleteAttachment: (attachment: AttachmentMeta) => void;
 }) {
+  const [categoryFilter, setCategoryFilter] = useState<ExpenseCategory | "全部">("全部");
   const summary = summarizeExpenses(tools.expenses);
+  const sortedExpenses = [...tools.expenses].sort((a, b) => `${b.date}${b.createdAt}`.localeCompare(`${a.date}${a.createdAt}`));
+  const filteredExpenses = categoryFilter === "全部" ? sortedExpenses : sortedExpenses.filter((expense) => expense.category === categoryFilter);
   return (
     <section id="private-travel-tools" className="private-tools-section">
       <div className="section-heading"><div><span className="eyebrow">LOCAL ONLY</span><h2>旅行工具</h2><p className="section-description">費用與票券只保存在這台管理裝置，不會寫入公開行程。</p></div><WalletCards size={21} /></div>
       <div className="private-tools-grid">
         <section className="tool-card private-tool-card">
-          <div className="tool-card-header"><div className="tool-card-title"><div className="info-card-icon expense-icon"><WalletCards size={20} /></div><div><span className="eyebrow">EXPENSES</span><h3>費用記帳</h3><p>人民幣總支出</p></div></div><div className="tool-header-actions"><button className="small-icon-button" aria-label="匯出旅費" onClick={onExportExpenses}><FileJson size={16} /></button><button className="secondary-button compact-button" onClick={onOcrExpense}><FileText size={16} />辨識截圖</button><button className="secondary-button compact-button" onClick={onAddExpense}><Plus size={16} /> 新增</button></div></div>
-          <div className="expense-total"><strong>¥ {summary.total.toFixed(2)}</strong><span>{tools.expenses.length} 筆記錄</span></div>
-          {Object.keys(summary.byPayer).length > 0 && <div className="expense-breakdown">{Object.entries(summary.byPayer).map(([payer, amount]) => <span key={payer}>{payer} ¥{amount.toFixed(2)}</span>)}</div>}
+          <div className="tool-card-header"><div className="tool-card-title"><div className="info-card-icon expense-icon"><WalletCards size={20} /></div><div><span className="eyebrow">EXPENSES</span><h3>費用記帳</h3><p>機票、住宿、餐飲與交通</p></div></div><div className="tool-header-actions"><button className="small-icon-button" aria-label="匯出旅費 JSON 與 CSV" onClick={onExportExpenses}><FileJson size={16} /></button><button className="small-icon-button" aria-label="匯入旅費" onClick={onImportExpenses}><Upload size={16} /></button><button className="secondary-button compact-button" onClick={onOcrExpense}><FileText size={16} />辨識截圖</button><button className="primary-button compact-button" onClick={() => onAddExpense()}><Plus size={16} /> 新增</button></div></div>
+          <div className="expense-quick-add"><span>快速記錄</span><div>{EXPENSE_QUICK_PRESETS.map((preset) => <button key={preset.category} type="button" onClick={() => onAddExpense({ title: preset.title, category: preset.category })}>{preset.label}</button>)}</div></div>
+          <div className="expense-total"><div><span>目前人民幣總額</span><strong>¥ {summary.total.toFixed(2)}</strong></div><span>{tools.expenses.length} 筆記錄</span></div>
+          {Object.keys(summary.byCategory).length > 0 && <div className="expense-breakdown">{EXPENSE_CATEGORIES.filter((category) => summary.byCategory[category] !== undefined).map((category) => <span key={category}>{category} ¥{summary.byCategory[category].toFixed(2)}</span>)}</div>}
+          {Object.keys(summary.byPayer).length > 0 && <div className="expense-breakdown expense-payer-breakdown">{Object.entries(summary.byPayer).map(([payer, amount]) => <span key={payer}>付款：{payer} ¥{amount.toFixed(2)}</span>)}</div>}
+          <div className="expense-filter" aria-label="篩選旅費分類"><span>查看</span><button type="button" className={categoryFilter === "全部" ? "is-selected" : ""} onClick={() => setCategoryFilter("全部")}>全部</button>{EXPENSE_CATEGORIES.map((category) => <button type="button" key={category} className={categoryFilter === category ? "is-selected" : ""} onClick={() => setCategoryFilter(category)}>{category}</button>)}</div>
           <div className="expense-list">
-            {[...tools.expenses].sort((a, b) => `${b.date}${b.createdAt}`.localeCompare(`${a.date}${a.createdAt}`)).map((expense) => (
-              <div className="expense-row" key={expense.id}><div className="expense-copy"><strong>{expense.title}</strong><span>{expense.date} · {expense.category} · {expense.payer}</span>{expense.note && <small>{expense.note}</small>}</div><strong className="expense-amount">¥{expense.amountCny.toFixed(2)}</strong><div className="item-admin-actions"><button className="small-icon-button" aria-label="編輯旅費" onClick={() => onEditExpense(expense)}><Pencil size={13} /></button><button className="small-icon-button danger" aria-label="刪除旅費" onClick={() => onDeleteExpense(expense.id)}><Trash2 size={13} /></button></div></div>
+            {filteredExpenses.map((expense) => (
+              <div className="expense-row" key={expense.id}><div className="expense-copy"><strong>{expense.title}</strong><span>{expense.date}{expense.dayNumber ? ` · Day ${expense.dayNumber}` : ""} · {expense.category}</span><small>{expense.payer} · {expense.paymentMethod ?? "付款方式未填"}{expense.note ? ` · ${expense.note}` : ""}</small></div><strong className="expense-amount">¥{expense.amountCny.toFixed(2)}</strong><div className="item-admin-actions"><button className="small-icon-button" aria-label="編輯旅費" onClick={() => onEditExpense(expense)}><Pencil size={13} /></button><button className="small-icon-button danger" aria-label="刪除旅費" onClick={() => onDeleteExpense(expense.id)}><Trash2 size={13} /></button></div></div>
             ))}
-            {tools.expenses.length === 0 && <p className="tool-empty">還沒有旅費記錄，出發後可在這裡快速登記。</p>}
+            {tools.expenses.length === 0 && <p className="tool-empty">還沒有旅費記錄，先用上方按鈕記下機票、飯店或餐費。</p>}
+            {tools.expenses.length > 0 && filteredExpenses.length === 0 && <p className="tool-empty">這個分類目前沒有記錄。</p>}
           </div>
+          <p className="tool-note">旅費只保存在管理者這台裝置；下載 JSON／CSV 做備份或旅後統計。行程日可用來對照 Day 1–5。</p>
         </section>
 
         <section className="tool-card private-tool-card">
@@ -1807,21 +1897,29 @@ function TaskEditorDialog({ task, onClose, onSave }: { task?: TripTask; onClose:
   return <Modal title={task ? "編輯家庭任務" : "新增家庭任務"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.title.trim()) return; onSave({ ...form, title: form.title.trim(), assignee: form.assignee?.trim() || undefined, notes: form.notes?.trim() || undefined }); }}><label>任務內容<input value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="例如：確認護照與台胞證" required /></label><div className="form-grid two-columns"><label>分類<select value={form.category} onChange={(event) => setField("category", event.target.value as TripTaskCategory)}>{TASK_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select></label><label>負責人<input value={form.assignee ?? ""} onChange={(event) => setField("assignee", event.target.value || undefined)} placeholder="可不填" /></label></div><label>備註<textarea value={form.notes ?? ""} onChange={(event) => setField("notes", event.target.value || undefined)} rows={3} placeholder="例如：放在隨身行李" /></label><label className="check-row"><input type="checkbox" checked={form.completed} onChange={(event) => setField("completed", event.target.checked)} />標記為已完成</label><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />儲存到草稿</button></div></form></Modal>;
 }
 
-function ExpenseEditorDialog({ expense, fileName, ocrResult, onClose, onSave }: { expense?: ExpenseRecord; fileName?: string; ocrResult?: PaymentOcrResult; onClose: () => void; onSave: (expense: ExpenseRecord) => void }) {
+function ExpenseEditorDialog({ days, expense, preset, fileName, ocrResult, onClose, onSave }: { days: TripDay[]; expense?: ExpenseRecord; preset?: ExpensePreset; fileName?: string; ocrResult?: PaymentOcrResult; onClose: () => void; onSave: (expense: ExpenseRecord) => void }) {
   const [form, setForm] = useState<ExpenseRecord>(() => ({
     id: expense?.id ?? makeId("expense"),
     date: expense?.date ?? getDateKey(new Date()),
-    title: expense?.title ?? "",
+    title: expense?.title ?? preset?.title ?? "",
     amountCny: expense?.amountCny ?? 0,
     payer: expense?.payer ?? "我",
-    category: expense?.category ?? "其他",
+    category: expense?.category ?? preset?.category ?? "其他",
+    paymentMethod: expense?.paymentMethod ?? preset?.paymentMethod ?? "現金",
+    dayNumber: expense?.dayNumber ?? preset?.dayNumber,
     note: expense?.note,
     createdAt: expense?.createdAt ?? new Date().toISOString()
   }));
   const setField = <K extends keyof ExpenseRecord>(field: K, value: ExpenseRecord[K]) => setForm((current) => ({ ...current, [field]: value }));
   return <Modal title={ocrResult ? "確認 OCR 記帳" : expense ? "編輯旅費" : "新增旅費"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.title.trim() || form.amountCny <= 0 || !form.payer.trim()) return; onSave({ ...form, title: form.title.trim(), payer: form.payer.trim(), note: form.note?.trim() || undefined, amountCny: Number(form.amountCny.toFixed(2)) }); }}>
     {ocrResult && <div className="ocr-result-summary"><div className="ocr-result-topline"><span className="ocr-source-badge">{ocrResult.source}</span><span>{fileName}</span></div><p>辨識結果只會先填入表單，請核對日期、金額與店家後再加入帳本。</p>{typeof ocrResult.confidence === "number" && <small>OCR 信心約 {Math.round(ocrResult.confidence)}%</small>}<details className="ocr-raw-text"><summary>查看原始辨識文字</summary><pre>{ocrResult.text || "（未讀到文字）"}</pre></details></div>}
-    <div className="form-grid two-columns"><label>日期<input type="date" value={form.date} onChange={(event) => setField("date", event.target.value)} required /></label><label>金額（人民幣）<input type="number" min="0.01" step="0.01" value={form.amountCny || ""} onChange={(event) => setField("amountCny", Number(event.target.value))} placeholder="例如 128.50" required /></label></div><label>項目<input value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="例如：Day 2 午餐" required /></label><div className="form-grid two-columns"><label>付款人<input value={form.payer} onChange={(event) => setField("payer", event.target.value)} placeholder="例如：我" required /></label><label>分類<select value={form.category} onChange={(event) => setField("category", event.target.value as ExpenseCategory)}>{EXPENSE_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select></label></div><label>備註<textarea value={form.note ?? ""} onChange={(event) => setField("note", event.target.value || undefined)} rows={3} placeholder="例如：含服務費、已用美團優惠" /></label><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />{ocrResult ? "確認並加入記帳" : "儲存到本機"}</button></div></form></Modal>;
+    <div className="form-grid two-columns"><label>日期<input type="date" value={form.date} onChange={(event) => setField("date", event.target.value)} required /></label><label>金額（人民幣）<input type="number" min="0.01" step="0.01" inputMode="decimal" value={form.amountCny || ""} onChange={(event) => setField("amountCny", Number(event.target.value))} placeholder="例如 128.50" required /></label></div>
+    <label>項目<input value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="例如：Day 2 午餐、BR712 機票" required /></label>
+    <div className="form-grid two-columns"><label>行程日<select value={form.dayNumber ?? ""} onChange={(event) => setField("dayNumber", event.target.value ? Number(event.target.value) : undefined)}><option value="">未指定</option>{days.map((day) => <option key={day.id} value={day.dayNumber}>Day {day.dayNumber} · {formatDate(day.date)}</option>)}</select></label><label>分類<select value={form.category} onChange={(event) => setField("category", event.target.value as ExpenseCategory)}>{EXPENSE_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select></label></div>
+    <div className="form-grid two-columns"><label>付款人<input value={form.payer} onChange={(event) => setField("payer", event.target.value)} placeholder="例如：我" required /></label><label>付款方式<select value={form.paymentMethod ?? "其他"} onChange={(event) => setField("paymentMethod", event.target.value as ExpensePaymentMethod)}>{EXPENSE_PAYMENT_METHODS.map((method) => <option key={method} value={method}>{method}</option>)}</select></label></div>
+    <label>備註<textarea value={form.note ?? ""} onChange={(event) => setField("note", event.target.value || undefined)} rows={3} placeholder="例如：含服務費、已用美團優惠、兩張機票" /></label>
+    <div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>取消</button><button type="submit" className="primary-button"><Save size={16} />{ocrResult ? "確認並加入記帳" : "儲存到本機"}</button></div>
+  </form></Modal>;
 }
 
 function OcrProgressDialog({ progress, onClose }: { progress: OcrProgressState; onClose: () => void }) {
