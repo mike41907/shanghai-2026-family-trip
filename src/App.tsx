@@ -56,13 +56,15 @@ import type { LucideIcon } from "lucide-react";
 import { LocalTripRepository, withInitialVersion } from "./lib/repository";
 import {
   expensesToCsv,
+  formatExpenseAmount,
   formatFileSize,
-  isExpenseRecord,
   LocalTravelToolsRepository,
+  normalizeExpenseRecord,
   summarizeExpenses,
   type AttachmentCategory,
   type AttachmentMeta,
   type ExpenseCategory,
+  type ExpenseCurrency,
   type ExpensePaymentMethod,
   type ExpenseRecord,
   type TravelToolsData
@@ -137,7 +139,7 @@ interface OcrReviewState {
   expense: ExpenseRecord;
 }
 
-type ExpensePreset = Partial<Pick<ExpenseRecord, "title" | "category" | "paymentMethod" | "dayNumber">>;
+type ExpensePreset = Partial<Pick<ExpenseRecord, "title" | "category" | "paymentMethod" | "dayNumber" | "currency">>;
 
 const NAV_ITEMS: Array<{ id: Page; label: string; icon: LucideIcon }> = [
   { id: "today", label: "今天", icon: Sun },
@@ -519,7 +521,8 @@ function App() {
       ...expense,
       title: expense.title.trim(),
       payer: expense.payer.trim(),
-      amountCny: Number(expense.amountCny.toFixed(2)),
+      amount: Number(expense.amount.toFixed(2)),
+      currency: expense.currency,
       paymentMethod: expense.paymentMethod ?? "其他",
       note: expense.note?.trim() || undefined
     };
@@ -551,7 +554,8 @@ function App() {
           id: makeId("expense"),
           date: result.date ?? getDateKey(new Date()),
           title: result.merchant ?? `${result.source}付款`,
-          amountCny: result.amountCny ?? 0,
+          amount: result.amountCny ?? 0,
+          currency: "CNY",
           payer: "我",
           category: result.source === "美團外送" ? "餐飲" : "其他",
           paymentMethod: result.source === "支付寶" ? "支付寶" : result.source === "微信支付" ? "微信支付" : result.source === "美團外送" ? "美團" : "其他",
@@ -579,7 +583,7 @@ function App() {
     const summary = summarizeExpenses(travelTools.expenses);
     downloadJson("shanghai-2026-expenses.json", {
       kind: "family-trip-expenses",
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: new Date().toISOString(),
       summary,
       expenses: travelTools.expenses
@@ -605,8 +609,10 @@ function App() {
       const candidate = parsed && typeof parsed === "object" && Array.isArray((parsed as { expenses?: unknown }).expenses)
         ? (parsed as { expenses: unknown[] }).expenses
         : parsed;
-      if (!Array.isArray(candidate) || !candidate.every(isExpenseRecord)) throw new Error("invalid");
-      const imported = candidate.map((expense) => ({ ...expense, paymentMethod: expense.paymentMethod ?? "其他" as const }));
+      if (!Array.isArray(candidate)) throw new Error("invalid");
+      const normalized = candidate.map(normalizeExpenseRecord);
+      if (normalized.some((expense) => expense === undefined)) throw new Error("invalid");
+      const imported = normalized.filter((expense): expense is ExpenseRecord => expense !== undefined).map((expense) => ({ ...expense, paymentMethod: expense.paymentMethod ?? "其他" as const }));
       if (!window.confirm(`匯入 ${imported.length} 筆旅費並取代目前本機帳本？`)) return;
       travelToolsRepository.saveExpenses(imported);
       setTravelTools({ ...travelTools, expenses: imported });
@@ -705,6 +711,7 @@ function App() {
             onToggleTask={toggleTask}
             onGoToTrip={() => setActivePage("trip")}
             onAddExpense={() => openExpenseEditor()}
+            onOcrExpense={() => paymentOcrInputRef.current?.click()}
             onOpenExpenses={openExpenseTools}
             onGoToSchedule={(dayNumber) => {
               setSelectedDay(dayNumber);
@@ -762,14 +769,6 @@ function App() {
       </main>
 
       <BottomNavigation activePage={activePage} onNavigate={setActivePage} />
-
-      {managerMode && travelTools && (
-        <button className="manager-expense-fab" onClick={openExpenseTools} aria-label="開啟費用記帳">
-          <WalletCards size={19} />
-          <span>記帳</span>
-          <small>拍照／新增</small>
-        </button>
-      )}
 
       {managerOpen && (
         <ManagerDrawer
@@ -1064,6 +1063,7 @@ function TodayPage({
   onToggleTask,
   onGoToTrip,
   onAddExpense,
+  onOcrExpense,
   onOpenExpenses,
   onGoToSchedule
 }: {
@@ -1075,6 +1075,7 @@ function TodayPage({
   onToggleTask: (taskId: string) => void;
   onGoToTrip: () => void;
   onAddExpense: () => void;
+  onOcrExpense: () => void;
   onOpenExpenses: () => void;
   onGoToSchedule: (dayNumber: number) => void;
 }) {
@@ -1118,7 +1119,7 @@ function TodayPage({
 
       <WeatherCard targetDate={reference.day.date} />
 
-      {managerMode && travelTools && <TodayExpenseCard tools={travelTools} onAdd={onAddExpense} onViewAll={onOpenExpenses} />}
+      {travelTools && <TodayExpenseCard tools={travelTools} onAdd={onAddExpense} onOcr={onOcrExpense} onViewAll={onOpenExpenses} />}
 
       {isBeforeTrip && <PreTripPreparationCard tasks={tasks} managerMode={managerMode} onToggleTask={onToggleTask} onGoToTrip={onGoToTrip} />}
 
@@ -1184,16 +1185,16 @@ function TodayPage({
   );
 }
 
-function TodayExpenseCard({ tools, onAdd, onViewAll }: { tools: TravelToolsData; onAdd: () => void; onViewAll: () => void }) {
+function TodayExpenseCard({ tools, onAdd, onOcr, onViewAll }: { tools: TravelToolsData; onAdd: () => void; onOcr: () => void; onViewAll: () => void }) {
   const summary = summarizeExpenses(tools.expenses);
   return (
     <section className="today-expense-card">
       <div className="today-expense-heading">
-        <div className="today-expense-title"><div className="info-card-icon expense-icon"><WalletCards size={21} /></div><div><span className="eyebrow">TRIP EXPENSES · LOCAL ONLY</span><h2>旅費記帳</h2><p>機票、住宿、餐飲與交通都集中記錄</p></div></div>
+        <div className="today-expense-title"><div className="info-card-icon expense-icon"><WalletCards size={21} /></div><div><span className="eyebrow">TRIP EXPENSES · LOCAL ONLY</span><h2>旅費記帳</h2><p>首頁即可記錄台幣、人民幣與付款截圖</p></div></div>
         <div className="today-expense-count">{tools.expenses.length} 筆</div>
       </div>
-      <div className="today-expense-total"><span>目前人民幣總額</span><strong>¥ {summary.total.toFixed(2)}</strong></div>
-      <div className="today-expense-actions"><button className="primary-button" type="button" onClick={onAdd}><Plus size={16} />新增花費</button><button className="secondary-button" type="button" onClick={onViewAll}><WalletCards size={16} />查看全部記錄</button></div>
+      <div className="today-expense-total"><div><span>人民幣</span><strong>{formatExpenseAmount(summary.byCurrency.CNY, "CNY")}</strong></div><div><span>新台幣</span><strong>{formatExpenseAmount(summary.byCurrency.TWD, "TWD")}</strong></div><span>{tools.expenses.length} 筆記錄</span></div>
+      <div className="today-expense-actions"><button className="primary-button" type="button" onClick={onAdd}><Plus size={16} />新增花費</button><button className="secondary-button" type="button" onClick={onOcr}><FileText size={16} />拍照辨識</button><button className="secondary-button" type="button" onClick={onViewAll}><WalletCards size={16} />查看全部記錄</button></div>
     </section>
   );
 }
@@ -1564,7 +1565,7 @@ function TripInfoPage({
       <MetroMapCard />
       {members.length > 0 && <section className="info-card members-card"><div className="info-card-icon"><Users size={22} /></div><div className="info-card-content"><span className="eyebrow">TRAVEL PARTY</span><h2>成員</h2><div className="member-list">{members.map((member) => <span key={member}>{member}</span>)}</div></div></section>}
       <TaskChecklist tasks={trip.tasks} managerMode={managerMode} onAdd={onAddTask} onEdit={onEditTask} onDelete={onDeleteTask} onToggle={onToggleTask} />
-      {managerMode && travelTools && <PrivateTravelTools days={trip.days} tools={travelTools} onAddExpense={onAddExpense} onEditExpense={onEditExpense} onDeleteExpense={onDeleteExpense} onExportExpenses={onExportExpenses} onOcrExpense={onOcrExpense} onImportExpenses={onImportExpenses} onAddAttachment={onAddAttachment} onDownloadAttachment={onDownloadAttachment} onDeleteAttachment={onDeleteAttachment} />}
+      {travelTools && <PrivateTravelTools managerMode={managerMode} days={trip.days} tools={travelTools} onAddExpense={onAddExpense} onEditExpense={onEditExpense} onDeleteExpense={onDeleteExpense} onExportExpenses={onExportExpenses} onOcrExpense={onOcrExpense} onImportExpenses={onImportExpenses} onAddAttachment={onAddAttachment} onDownloadAttachment={onDownloadAttachment} onDeleteAttachment={onDeleteAttachment} />}
     </div>
   );
 }
@@ -1675,6 +1676,14 @@ const EXPENSE_QUICK_PRESETS: Array<{ label: string; title: string; category: Exp
 ];
 const ATTACHMENT_CATEGORIES: AttachmentCategory[] = ["機票／登機證", "訂位資訊", "付款 QR Code", "其他"];
 
+function formatExpenseTotals(totals: Record<ExpenseCurrency, number>): string {
+  const formatted = [
+    totals.CNY > 0 ? formatExpenseAmount(totals.CNY, "CNY") : undefined,
+    totals.TWD > 0 ? formatExpenseAmount(totals.TWD, "TWD") : undefined
+  ].filter((value): value is string => value !== undefined);
+  return formatted.join(" · ") || "—";
+}
+
 function TaskChecklist({
   tasks,
   managerMode,
@@ -1713,6 +1722,7 @@ function TaskChecklist({
 }
 
 function PrivateTravelTools({
+  managerMode,
   days,
   tools,
   onAddExpense,
@@ -1725,6 +1735,7 @@ function PrivateTravelTools({
   onDownloadAttachment,
   onDeleteAttachment
 }: {
+  managerMode: boolean;
   days: TripDay[];
   tools: TravelToolsData;
   onAddExpense: (preset?: ExpensePreset) => void;
@@ -1743,33 +1754,33 @@ function PrivateTravelTools({
   const filteredExpenses = categoryFilter === "全部" ? sortedExpenses : sortedExpenses.filter((expense) => expense.category === categoryFilter);
   return (
     <section id="private-travel-tools" className="private-tools-section">
-      <div className="section-heading"><div><span className="eyebrow">LOCAL ONLY</span><h2>旅行工具</h2><p className="section-description">費用與票券只保存在這台管理裝置，不會寫入公開行程。</p></div><WalletCards size={21} /></div>
+      <div className="section-heading"><div><span className="eyebrow">LOCAL ONLY</span><h2>旅行工具</h2><p className="section-description">旅費可直接記錄；資料只保存在這台裝置，不會寫入公開行程。</p></div><WalletCards size={21} /></div>
       <div className="private-tools-grid">
         <section className="tool-card private-tool-card">
-          <div className="tool-card-header"><div className="tool-card-title"><div className="info-card-icon expense-icon"><WalletCards size={20} /></div><div><span className="eyebrow">EXPENSES</span><h3>費用記帳</h3><p>機票、住宿、餐飲與交通</p></div></div><div className="tool-header-actions"><button className="small-icon-button" aria-label="匯出旅費 JSON 與 CSV" onClick={onExportExpenses}><FileJson size={16} /></button><button className="small-icon-button" aria-label="匯入旅費" onClick={onImportExpenses}><Upload size={16} /></button><button className="secondary-button compact-button" onClick={onOcrExpense}><FileText size={16} />辨識截圖</button><button className="primary-button compact-button" onClick={() => onAddExpense()}><Plus size={16} /> 新增</button></div></div>
+          <div className="tool-card-header expense-card-header"><div className="tool-card-title"><div className="info-card-icon expense-icon"><WalletCards size={20} /></div><div><span className="eyebrow">EXPENSES</span><h3>費用記帳</h3><p>台幣、人民幣、付款人與分類</p></div></div><div className="tool-header-actions expense-header-actions"><button className="secondary-button compact-button" aria-label="匯出旅費 JSON 與 CSV" onClick={onExportExpenses}><FileJson size={16} />匯出</button><button className="secondary-button compact-button" aria-label="匯入旅費" onClick={onImportExpenses}><Upload size={16} />匯入</button><button className="secondary-button compact-button" onClick={onOcrExpense}><FileText size={16} />辨識截圖</button><button className="primary-button compact-button" onClick={() => onAddExpense()}><Plus size={16} /> 新增</button></div></div>
           <div className="expense-quick-add"><span>快速記錄</span><div>{EXPENSE_QUICK_PRESETS.map((preset) => <button key={preset.category} type="button" onClick={() => onAddExpense({ title: preset.title, category: preset.category })}>{preset.label}</button>)}</div></div>
-          <div className="expense-total"><div><span>目前人民幣總額</span><strong>¥ {summary.total.toFixed(2)}</strong></div><span>{tools.expenses.length} 筆記錄</span></div>
-          {Object.keys(summary.byCategory).length > 0 && <div className="expense-breakdown">{EXPENSE_CATEGORIES.filter((category) => summary.byCategory[category] !== undefined).map((category) => <span key={category}>{category} ¥{summary.byCategory[category].toFixed(2)}</span>)}</div>}
-          {Object.keys(summary.byPayer).length > 0 && <div className="expense-breakdown expense-payer-breakdown">{Object.entries(summary.byPayer).map(([payer, amount]) => <span key={payer}>付款：{payer} ¥{amount.toFixed(2)}</span>)}</div>}
+          <div className="expense-total"><div><span>人民幣</span><strong>{formatExpenseAmount(summary.byCurrency.CNY, "CNY")}</strong></div><div><span>新台幣</span><strong>{formatExpenseAmount(summary.byCurrency.TWD, "TWD")}</strong></div><span>{tools.expenses.length} 筆記錄</span></div>
+          {Object.keys(summary.byCategory).length > 0 && <div className="expense-breakdown">{EXPENSE_CATEGORIES.filter((category) => summary.byCategory[category] !== undefined).map((category) => <span key={category}>{category} {formatExpenseTotals(summary.byCategory[category]!)}</span>)}</div>}
+          {Object.keys(summary.byPayer).length > 0 && <div className="expense-breakdown expense-payer-breakdown">{Object.entries(summary.byPayer).map(([payer, totals]) => <span key={payer}>付款：{payer} {formatExpenseTotals(totals)}</span>)}</div>}
           <div className="expense-filter" aria-label="篩選旅費分類"><span>查看</span><button type="button" className={categoryFilter === "全部" ? "is-selected" : ""} onClick={() => setCategoryFilter("全部")}>全部</button>{EXPENSE_CATEGORIES.map((category) => <button type="button" key={category} className={categoryFilter === category ? "is-selected" : ""} onClick={() => setCategoryFilter(category)}>{category}</button>)}</div>
           <div className="expense-list">
             {filteredExpenses.map((expense) => (
-              <div className="expense-row" key={expense.id}><div className="expense-copy"><strong>{expense.title}</strong><span>{expense.date}{expense.dayNumber ? ` · Day ${expense.dayNumber}` : ""} · {expense.category}</span><small>{expense.payer} · {expense.paymentMethod ?? "付款方式未填"}{expense.note ? ` · ${expense.note}` : ""}</small></div><strong className="expense-amount">¥{expense.amountCny.toFixed(2)}</strong><div className="item-admin-actions"><button className="small-icon-button" aria-label="編輯旅費" onClick={() => onEditExpense(expense)}><Pencil size={13} /></button><button className="small-icon-button danger" aria-label="刪除旅費" onClick={() => onDeleteExpense(expense.id)}><Trash2 size={13} /></button></div></div>
+              <div className="expense-row" key={expense.id}><div className="expense-copy"><strong>{expense.title}</strong><span>{expense.date}{expense.dayNumber ? ` · Day ${expense.dayNumber}` : ""} · {expense.category}</span><small>{expense.payer} · {expense.paymentMethod ?? "付款方式未填"}{expense.note ? ` · ${expense.note}` : ""}</small></div><strong className="expense-amount">{formatExpenseAmount(expense.amount, expense.currency)}</strong><div className="item-admin-actions"><button className="small-icon-button" aria-label="編輯旅費" onClick={() => onEditExpense(expense)}><Pencil size={13} /></button><button className="small-icon-button danger" aria-label="刪除旅費" onClick={() => onDeleteExpense(expense.id)}><Trash2 size={13} /></button></div></div>
             ))}
             {tools.expenses.length === 0 && <p className="tool-empty">還沒有旅費記錄，先用上方按鈕記下機票、飯店或餐費。</p>}
             {tools.expenses.length > 0 && filteredExpenses.length === 0 && <p className="tool-empty">這個分類目前沒有記錄。</p>}
           </div>
-          <p className="tool-note">旅費只保存在管理者這台裝置；下載 JSON／CSV 做備份或旅後統計。行程日可用來對照 Day 1–5。</p>
+          <p className="tool-note">旅費只保存在目前裝置，首頁即可新增、編輯與刪除；下載 JSON／CSV 做備份或旅後統計。行程日可用來對照 Day 1–5。</p>
         </section>
 
-        <section className="tool-card private-tool-card">
+        {managerMode && <section className="tool-card private-tool-card">
           <div className="tool-card-header"><div className="tool-card-title"><div className="info-card-icon attachment-icon"><Paperclip size={20} /></div><div><span className="eyebrow">TICKETS & FILES</span><h3>票券與截圖</h3><p>本機保存，不公開上傳</p></div></div><button className="secondary-button compact-button" onClick={onAddAttachment}><Upload size={16} /> 新增附件</button></div>
           <div className="attachment-list">
             {tools.attachments.map((attachment) => <div className="attachment-row" key={attachment.id}><div className="attachment-icon-box">{attachment.mimeType.startsWith("image/") ? <FileText size={18} /> : <FileJson size={18} />}</div><div className="attachment-copy"><strong title={attachment.name}>{attachment.name}</strong><span>{attachment.category} · {formatFileSize(attachment.size)}</span>{attachment.note && <small>{attachment.note}</small>}</div><div className="item-admin-actions"><button className="small-icon-button" aria-label={`下載 ${attachment.name}`} onClick={() => onDownloadAttachment(attachment)}><Download size={14} /></button><button className="small-icon-button danger" aria-label={`刪除 ${attachment.name}`} onClick={() => onDeleteAttachment(attachment)}><Trash2 size={14} /></button></div></div>)}
             {tools.attachments.length === 0 && <p className="tool-empty">可加入機票、訂位截圖或付款 QR Code。</p>}
           </div>
           <p className="tool-note">附件放在瀏覽器的 IndexedDB；清除網站資料或換裝置前，請先下載保留。</p>
-        </section>
+        </section>}
       </div>
     </section>
   );
@@ -1902,7 +1913,8 @@ function ExpenseEditorDialog({ days, expense, preset, fileName, ocrResult, onClo
     id: expense?.id ?? makeId("expense"),
     date: expense?.date ?? getDateKey(new Date()),
     title: expense?.title ?? preset?.title ?? "",
-    amountCny: expense?.amountCny ?? 0,
+    amount: expense?.amount ?? 0,
+    currency: expense?.currency ?? preset?.currency ?? "CNY",
     payer: expense?.payer ?? "我",
     category: expense?.category ?? preset?.category ?? "其他",
     paymentMethod: expense?.paymentMethod ?? preset?.paymentMethod ?? "現金",
@@ -1911,9 +1923,9 @@ function ExpenseEditorDialog({ days, expense, preset, fileName, ocrResult, onClo
     createdAt: expense?.createdAt ?? new Date().toISOString()
   }));
   const setField = <K extends keyof ExpenseRecord>(field: K, value: ExpenseRecord[K]) => setForm((current) => ({ ...current, [field]: value }));
-  return <Modal title={ocrResult ? "確認 OCR 記帳" : expense ? "編輯旅費" : "新增旅費"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.title.trim() || form.amountCny <= 0 || !form.payer.trim()) return; onSave({ ...form, title: form.title.trim(), payer: form.payer.trim(), note: form.note?.trim() || undefined, amountCny: Number(form.amountCny.toFixed(2)) }); }}>
+  return <Modal title={ocrResult ? "確認 OCR 記帳" : expense ? "編輯旅費" : "新增旅費"} onClose={onClose}><form className="form-stack" onSubmit={(event: FormEvent) => { event.preventDefault(); if (!form.title.trim() || form.amount <= 0 || !form.payer.trim()) return; onSave({ ...form, title: form.title.trim(), payer: form.payer.trim(), note: form.note?.trim() || undefined, amount: Number(form.amount.toFixed(2)) }); }}>
     {ocrResult && <div className="ocr-result-summary"><div className="ocr-result-topline"><span className="ocr-source-badge">{ocrResult.source}</span><span>{fileName}</span></div><p>辨識結果只會先填入表單，請核對日期、金額與店家後再加入帳本。</p>{typeof ocrResult.confidence === "number" && <small>OCR 信心約 {Math.round(ocrResult.confidence)}%</small>}<details className="ocr-raw-text"><summary>查看原始辨識文字</summary><pre>{ocrResult.text || "（未讀到文字）"}</pre></details></div>}
-    <div className="form-grid two-columns"><label>日期<input type="date" value={form.date} onChange={(event) => setField("date", event.target.value)} required /></label><label>金額（人民幣）<input type="number" min="0.01" step="0.01" inputMode="decimal" value={form.amountCny || ""} onChange={(event) => setField("amountCny", Number(event.target.value))} placeholder="例如 128.50" required /></label></div>
+    <div className="form-grid two-columns"><label>日期<input type="date" value={form.date} onChange={(event) => setField("date", event.target.value)} required /></label><div className="expense-amount-fields"><label>金額<input type="number" min="0.01" step="0.01" inputMode="decimal" value={form.amount || ""} onChange={(event) => setField("amount", Number(event.target.value))} placeholder="例如 128.50" required /></label><label>幣別<select value={form.currency} onChange={(event) => setField("currency", event.target.value as ExpenseCurrency)}><option value="CNY">人民幣（CNY）</option><option value="TWD">台幣（TWD）</option></select></label></div></div>
     <label>項目<input value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="例如：Day 2 午餐、BR712 機票" required /></label>
     <div className="form-grid two-columns"><label>行程日<select value={form.dayNumber ?? ""} onChange={(event) => setField("dayNumber", event.target.value ? Number(event.target.value) : undefined)}><option value="">未指定</option>{days.map((day) => <option key={day.id} value={day.dayNumber}>Day {day.dayNumber} · {formatDate(day.date)}</option>)}</select></label><label>分類<select value={form.category} onChange={(event) => setField("category", event.target.value as ExpenseCategory)}>{EXPENSE_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select></label></div>
     <div className="form-grid two-columns"><label>付款人<input value={form.payer} onChange={(event) => setField("payer", event.target.value)} placeholder="例如：我" required /></label><label>付款方式<select value={form.paymentMethod ?? "其他"} onChange={(event) => setField("paymentMethod", event.target.value as ExpensePaymentMethod)}>{EXPENSE_PAYMENT_METHODS.map((method) => <option key={method} value={method}>{method}</option>)}</select></label></div>

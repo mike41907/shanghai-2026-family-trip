@@ -2,12 +2,14 @@ import { makeId } from "./utils";
 
 export type ExpenseCategory = "餐飲" | "交通" | "住宿" | "機票" | "門票" | "購物" | "其他";
 export type ExpensePaymentMethod = "現金" | "支付寶" | "微信支付" | "美團" | "信用卡" | "其他";
+export type ExpenseCurrency = "CNY" | "TWD";
 
 export interface ExpenseRecord {
   id: string;
   date: string;
   title: string;
-  amountCny: number;
+  amount: number;
+  currency: ExpenseCurrency;
   payer: string;
   category: ExpenseCategory;
   paymentMethod?: ExpensePaymentMethod;
@@ -52,25 +54,53 @@ function readExpenses(): ExpenseRecord[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isExpenseRecord);
+    return parsed.map(normalizeExpenseRecord).filter((expense): expense is ExpenseRecord => expense !== undefined);
   } catch {
     return [];
   }
 }
 
+export function normalizeExpenseRecord(value: unknown): ExpenseRecord | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const candidate = value as Partial<ExpenseRecord> & { amountCny?: unknown; currency?: unknown };
+  const isLegacyCny = typeof candidate.amountCny === "number";
+  const amount = typeof candidate.amount === "number" ? candidate.amount : isLegacyCny ? candidate.amountCny : undefined;
+  const currency = candidate.currency === "CNY" || candidate.currency === "TWD"
+    ? candidate.currency
+    : isLegacyCny ? "CNY" : undefined;
+  if (typeof candidate.id !== "string" ||
+    typeof candidate.date !== "string" ||
+    typeof candidate.title !== "string" ||
+    typeof amount !== "number" ||
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    (currency !== "CNY" && currency !== "TWD") ||
+    typeof candidate.payer !== "string" ||
+    typeof candidate.category !== "string") {
+    return undefined;
+  }
+
+  const paymentMethod = candidate.paymentMethod === "現金" || candidate.paymentMethod === "支付寶" || candidate.paymentMethod === "微信支付" || candidate.paymentMethod === "美團" || candidate.paymentMethod === "信用卡" || candidate.paymentMethod === "其他"
+    ? candidate.paymentMethod
+    : undefined;
+  const dayNumber = typeof candidate.dayNumber === "number" && Number.isInteger(candidate.dayNumber) ? candidate.dayNumber : undefined;
+  return {
+    id: candidate.id,
+    date: candidate.date,
+    title: candidate.title,
+    amount: Number(amount.toFixed(2)),
+    currency,
+    payer: candidate.payer,
+    category: candidate.category as ExpenseCategory,
+    paymentMethod,
+    dayNumber,
+    note: typeof candidate.note === "string" ? candidate.note : undefined,
+    createdAt: typeof candidate.createdAt === "string" ? candidate.createdAt : new Date().toISOString()
+  };
+}
+
 export function isExpenseRecord(value: unknown): value is ExpenseRecord {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as Partial<ExpenseRecord>;
-  return typeof candidate.id === "string" &&
-    typeof candidate.date === "string" &&
-    typeof candidate.title === "string" &&
-    typeof candidate.amountCny === "number" &&
-    Number.isFinite(candidate.amountCny) &&
-    candidate.amountCny > 0 &&
-    typeof candidate.payer === "string" &&
-    typeof candidate.category === "string" &&
-    (candidate.paymentMethod === undefined || typeof candidate.paymentMethod === "string") &&
-    (candidate.dayNumber === undefined || (typeof candidate.dayNumber === "number" && Number.isInteger(candidate.dayNumber)));
+  return normalizeExpenseRecord(value) !== undefined;
 }
 
 function writeExpenses(expenses: ExpenseRecord[]): void {
@@ -172,17 +202,33 @@ export class LocalTravelToolsRepository {
   }
 }
 
+export type ExpenseTotals = Record<ExpenseCurrency, number>;
+
+function emptyExpenseTotals(): ExpenseTotals {
+  return { CNY: 0, TWD: 0 };
+}
+
+function addExpenseTotal(totals: Record<string, ExpenseTotals>, key: string, expense: ExpenseRecord): void {
+  const current = totals[key] ?? emptyExpenseTotals();
+  current[expense.currency] += expense.amount;
+  totals[key] = current;
+}
+
 export function summarizeExpenses(expenses: ExpenseRecord[]): {
-  total: number;
-  byPayer: Record<string, number>;
-  byCategory: Record<string, number>;
+  byCurrency: ExpenseTotals;
+  byPayer: Record<string, ExpenseTotals>;
+  byCategory: Record<string, ExpenseTotals>;
 } {
   return expenses.reduce((summary, expense) => {
-    summary.total += expense.amountCny;
-    summary.byPayer[expense.payer] = (summary.byPayer[expense.payer] ?? 0) + expense.amountCny;
-    summary.byCategory[expense.category] = (summary.byCategory[expense.category] ?? 0) + expense.amountCny;
+    summary.byCurrency[expense.currency] += expense.amount;
+    addExpenseTotal(summary.byPayer, expense.payer, expense);
+    addExpenseTotal(summary.byCategory, expense.category, expense);
     return summary;
-  }, { total: 0, byPayer: {}, byCategory: {} } as { total: number; byPayer: Record<string, number>; byCategory: Record<string, number> });
+  }, { byCurrency: emptyExpenseTotals(), byPayer: {}, byCategory: {} } as { byCurrency: ExpenseTotals; byPayer: Record<string, ExpenseTotals>; byCategory: Record<string, ExpenseTotals> });
+}
+
+export function formatExpenseAmount(amount: number, currency: ExpenseCurrency): string {
+  return `${currency === "TWD" ? "NT$" : "¥"} ${amount.toFixed(2)}`;
 }
 
 function csvCell(value: string | number): string {
@@ -191,12 +237,13 @@ function csvCell(value: string | number): string {
 
 export function expensesToCsv(expenses: ExpenseRecord[]): string {
   const rows = [
-    ["日期", "行程日", "項目", "金額（人民幣）", "付款人", "付款方式", "分類", "備註"],
+    ["日期", "行程日", "項目", "幣別", "金額", "付款人", "付款方式", "分類", "備註"],
     ...[...expenses].sort((a, b) => a.date.localeCompare(b.date)).map((expense) => [
       expense.date,
       expense.dayNumber ? `Day ${expense.dayNumber}` : "",
       expense.title,
-      expense.amountCny.toFixed(2),
+      expense.currency,
+      expense.amount.toFixed(2),
       expense.payer,
       expense.paymentMethod ?? "未填寫",
       expense.category,
