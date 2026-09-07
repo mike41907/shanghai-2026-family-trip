@@ -1606,8 +1606,7 @@ function MetroMapCard() {
         <div className="metro-route-heading"><strong>本次行程會用到</strong><span>快速看轉乘</span></div>
         <div className="metro-route-list">
           <div className="metro-route-row"><span className="metro-line-badge maglev">磁浮</span><div><strong>浦東機場 ↔ 龍陽路</strong><span>Day 1 抵達、Day 5 回機場</span></div></div>
-          <div className="metro-route-row"><span className="metro-line-badge line-2">2 號線</span><div><strong>南京東路站 → 虹橋火車站</strong><span>Day 3 前往朱家角的第一段地鐵</span></div></div>
-          <div className="metro-route-row"><span className="metro-line-badge line-17">17 號線</span><div><strong>虹橋火車站 → 朱家角站</strong><span>Day 3 下車後再搭滴滴到古鎮</span></div></div>
+          <div className="metro-route-row"><span className="metro-line-badge line-13">2＋13</span><div><strong>南京東路站 → 世博大道站</strong><span>Day 3 地鐵備選：2 號線至南京西路站轉 13 號線</span></div></div>
         </div>
         <p className="metro-map-note">地圖來源：上海申通地鐵集團 2024 官方路線圖。圖檔已內建並加入離線快取；官方更新頁需要網路。</p>
       </section>

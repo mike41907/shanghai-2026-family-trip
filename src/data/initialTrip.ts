@@ -347,59 +347,40 @@ export const INITIAL_TRIP: TripDocument = {
     day(
       3,
       "2026-09-16",
-      "朱家角＋游沐日記",
-      "早餐後以地鐵與 17 號線前往朱家角古鎮，下午回市區泡湯、汗蒸與休息。",
+      "上海千古情＋游沐日記",
+      "早餐後搭滴滴前往上海千古情，下午回市區泡湯、汗蒸與休息。",
       [
         item("d3-breakfast", "07:30", "飯店早餐或附近麵店", {
           endTime: "08:15",
           category: "早餐",
           flexible: true,
           duration: "約 45 分鐘",
-          notes: "飯店早餐或依當天方便選擇附近麵店；08:30 出發前往南京東路站。"
+          notes: "飯店早餐或依當天方便選擇附近麵店；08:30 出發前往上海千古情。"
         }),
         item("d3-hotel-leave", "08:30", "飯店出發", {
           category: "交通",
           address: "上海市黃浦區北京東路398號",
-          transportMode: "walk",
-          transportNote: "前往南京東路站。"
+          transportMode: "taxi",
+          transportNote: "搭滴滴／計程車前往上海千古情。"
         }),
-        item("d3-nanjing-station", "08:45", "南京東路站", {
-          category: "交通",
-          transportMode: "walk",
-          notes: "飯店 → 南京東路站。"
-        }),
-        item("d3-metro-2", "08:50", "地鐵 2 號線 → 虹橋火車站", {
-          category: "交通",
-          transportMode: "metro",
-          transportNote: "南京東路站搭地鐵 2 號線。"
-        }),
-        item("d3-metro-17", "09:30", "轉 17 號線 → 朱家角站", {
-          category: "交通",
-          transportMode: "metro",
-          transportNote: "虹橋火車站轉乘 17 號線。"
-        }),
-        item("d3-zhujiajiao", "10:30", "朱家角古鎮", {
-          endTime: "14:30",
-          category: "景點",
-          address: "上海市青浦區朱家角鎮",
-          businessHours: "古鎮街區全天可逛",
-          duration: "約 4 小時",
-          notes: "放生橋、北大街、水岸老街、路邊小吃、搭船。"
-        }),
-        item("d3-leave-zhujiajiao", "14:30", "離開朱家角", {
-          category: "交通",
-          transportMode: "walk",
-          transportNote: "前往朱家角站。"
-        }),
-        item("d3-back-hongqiao", "14:45", "朱家角站 → 虹橋火車站", {
-          category: "交通",
-          transportMode: "metro",
-          transportNote: "17 號線。"
-        }),
-        item("d3-to-youmu", "15:20", "虹橋火車站 → 滴滴 → 游沐日記", {
+        item("d3-to-qianguqing", "08:30", "滴滴 → 上海千古情", {
+          endTime: "09:30",
           category: "交通",
           transportMode: "taxi",
-          transportNote: "從虹橋火車站搭滴滴前往游沐日記。"
+          transportNote: "從飯店前往世博大道1750號，預留報到與入場時間；依路況。"
+        }),
+        item("d3-qianguqing", "10:30", "上海千古情", {
+          endTime: "14:30",
+          category: "景點／演出",
+          address: "上海市浦東新區世博大道1750號",
+          businessHours: "景區／演出場次依當日公告",
+          duration: "約 4 小時",
+          notes: "上海千古情景區與演出；請依票券確認當日場次，並預留報到時間。"
+        }),
+        item("d3-to-youmu", "14:30", "滴滴 → 游沐日記", {
+          category: "交通",
+          transportMode: "taxi",
+          transportNote: "從上海千古情搭滴滴前往游沐日記，依路況。"
         }),
         item("d3-youmu", "16:00", "游沐日記", {
           endTime: "21:00",
@@ -416,13 +397,9 @@ export const INITIAL_TRIP: TripDocument = {
         })
       ],
       [
-        segment("d3-t1", "飯店", "南京東路站", "walk", "步行", "約 10 分鐘"),
-        segment("d3-t2", "南京東路站", "虹橋火車站", "metro", "地鐵 2 號線", "依班距"),
-        segment("d3-t3", "虹橋火車站", "朱家角站", "metro", "轉乘 17 號線", "依班距"),
-        segment("d3-t4", "朱家角站", "朱家角古鎮", "taxi", "滴滴", "依路況"),
-        segment("d3-t5", "朱家角站", "虹橋火車站", "metro", "17 號線", "依班距"),
-        segment("d3-t6", "虹橋火車站", "游沐日記", "taxi", "滴滴", "依路況"),
-        segment("d3-t7", "游沐日記", "飯店", "taxi", "滴滴", "依路況")
+        segment("d3-t1", "飯店", "上海千古情", "taxi", "滴滴", "依路況"),
+        segment("d3-t2", "上海千古情", "游沐日記", "taxi", "滴滴", "依路況"),
+        segment("d3-t3", "游沐日記", "飯店", "taxi", "滴滴", "依路況")
       ]
     ),
     day(

@@ -301,8 +301,8 @@
       "id": "day-3",
       "dayNumber": 3,
       "date": "2026-09-16",
-      "title": "朱家角＋游沐日記",
-      "overview": "早餐後以地鐵與 17 號線前往朱家角古鎮，下午回市區泡湯、汗蒸與休息。",
+      "title": "上海千古情＋游沐日記",
+      "overview": "早餐後搭滴滴前往上海千古情，下午回市區泡湯、汗蒸與休息。",
       "items": [
         {
           "id": "d3-breakfast",
@@ -312,7 +312,7 @@
           "category": "早餐",
           "flexible": true,
           "duration": "約 45 分鐘",
-          "notes": "飯店早餐或依當天方便選擇附近麵店；08:30 出發前往南京東路站。"
+          "notes": "飯店早餐或依當天方便選擇附近麵店；08:30 出發前往上海千古情。"
         },
         {
           "id": "d3-hotel-leave",
@@ -320,67 +320,36 @@
           "title": "飯店出發",
           "category": "交通",
           "address": "上海市黃浦區北京東路398號",
-          "transportMode": "walk",
-          "transportNote": "前往南京東路站。"
+          "transportMode": "taxi",
+          "transportNote": "搭滴滴／計程車前往上海千古情。"
         },
         {
-          "id": "d3-nanjing-station",
-          "startTime": "08:45",
-          "title": "南京東路站",
+          "id": "d3-to-qianguqing",
+          "startTime": "08:30",
+          "title": "滴滴 → 上海千古情",
+          "endTime": "09:30",
           "category": "交通",
-          "transportMode": "walk",
-          "notes": "飯店 → 南京東路站。"
+          "transportMode": "taxi",
+          "transportNote": "從飯店前往世博大道1750號，預留報到與入場時間；依路況。"
         },
         {
-          "id": "d3-metro-2",
-          "startTime": "08:50",
-          "title": "地鐵 2 號線 → 虹橋火車站",
-          "category": "交通",
-          "transportMode": "metro",
-          "transportNote": "南京東路站搭地鐵 2 號線。"
-        },
-        {
-          "id": "d3-metro-17",
-          "startTime": "09:30",
-          "title": "轉 17 號線 → 朱家角站",
-          "category": "交通",
-          "transportMode": "metro",
-          "transportNote": "虹橋火車站轉乘 17 號線。"
-        },
-        {
-          "id": "d3-zhujiajiao",
+          "id": "d3-qianguqing",
           "startTime": "10:30",
-          "title": "朱家角古鎮",
+          "title": "上海千古情",
           "endTime": "14:30",
-          "category": "景點",
-          "address": "上海市青浦區朱家角鎮",
-          "businessHours": "古鎮街區全天可逛",
+          "category": "景點／演出",
+          "address": "上海市浦東新區世博大道1750號",
+          "businessHours": "景區／演出場次依當日公告",
           "duration": "約 4 小時",
-          "notes": "放生橋、北大街、水岸老街、路邊小吃、搭船。"
-        },
-        {
-          "id": "d3-leave-zhujiajiao",
-          "startTime": "14:30",
-          "title": "離開朱家角",
-          "category": "交通",
-          "transportMode": "walk",
-          "transportNote": "前往朱家角站。"
-        },
-        {
-          "id": "d3-back-hongqiao",
-          "startTime": "14:45",
-          "title": "朱家角站 → 虹橋火車站",
-          "category": "交通",
-          "transportMode": "metro",
-          "transportNote": "17 號線。"
+          "notes": "上海千古情景區與演出；請依票券確認當日場次，並預留報到時間。"
         },
         {
           "id": "d3-to-youmu",
-          "startTime": "15:20",
-          "title": "虹橋火車站 → 滴滴 → 游沐日記",
+          "startTime": "14:30",
+          "title": "滴滴 → 游沐日記",
           "category": "交通",
           "transportMode": "taxi",
-          "transportNote": "從虹橋火車站搭滴滴前往游沐日記。"
+          "transportNote": "從上海千古情搭滴滴前往游沐日記，依路況。"
         },
         {
           "id": "d3-youmu",
@@ -406,53 +375,21 @@
         {
           "id": "d3-t1",
           "from": "飯店",
-          "to": "南京東路站",
-          "mode": "walk",
-          "detail": "步行",
-          "duration": "約 10 分鐘"
-        },
-        {
-          "id": "d3-t2",
-          "from": "南京東路站",
-          "to": "虹橋火車站",
-          "mode": "metro",
-          "detail": "地鐵 2 號線",
-          "duration": "依班距"
-        },
-        {
-          "id": "d3-t3",
-          "from": "虹橋火車站",
-          "to": "朱家角站",
-          "mode": "metro",
-          "detail": "轉乘 17 號線",
-          "duration": "依班距"
-        },
-        {
-          "id": "d3-t4",
-          "from": "朱家角站",
-          "to": "朱家角古鎮",
+          "to": "上海千古情",
           "mode": "taxi",
           "detail": "滴滴",
           "duration": "依路況"
         },
         {
-          "id": "d3-t5",
-          "from": "朱家角站",
-          "to": "虹橋火車站",
-          "mode": "metro",
-          "detail": "17 號線",
-          "duration": "依班距"
-        },
-        {
-          "id": "d3-t6",
-          "from": "虹橋火車站",
+          "id": "d3-t2",
+          "from": "上海千古情",
           "to": "游沐日記",
           "mode": "taxi",
           "detail": "滴滴",
           "duration": "依路況"
         },
         {
-          "id": "d3-t7",
+          "id": "d3-t3",
           "from": "游沐日記",
           "to": "飯店",
           "mode": "taxi",
