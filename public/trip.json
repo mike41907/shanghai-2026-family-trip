@@ -301,8 +301,8 @@
       "id": "day-3",
       "dayNumber": 3,
       "date": "2026-09-16",
-      "title": "上海千古情＋游沐日記",
-      "overview": "早餐後搭滴滴前往上海千古情，下午回市區泡湯、汗蒸與休息。",
+      "title": "上海千古情・敘敦煌",
+      "overview": "早餐後搭滴滴前往上海千古情，下午前往北外灘來福士，銜接敘宴妝髮與敘敦煌晚宴。",
       "items": [
         {
           "id": "d3-breakfast",
@@ -344,23 +344,35 @@
           "notes": "上海千古情景區與演出；請依票券確認當日場次，並預留報到時間。"
         },
         {
-          "id": "d3-to-youmu",
+          "id": "d3-to-xuyan",
           "startTime": "14:30",
-          "title": "滴滴 → 游沐日記",
+          "title": "滴滴 → 敘宴・敘敦煌",
+          "endTime": "15:20",
           "category": "交通",
           "transportMode": "taxi",
-          "transportNote": "從上海千古情搭滴滴前往游沐日記，依路況。"
+          "transportNote": "從上海千古情搭滴滴前往北外灘來福士，預留報到與妝髮時間；依路況。"
         },
         {
-          "id": "d3-youmu",
+          "id": "d3-checkin",
+          "startTime": "15:45",
+          "title": "敘宴報到",
+          "category": "活動",
+          "address": "上海市虹口區東大名路999號，北外灘來福士 3 樓"
+        },
+        {
+          "id": "d3-makeup",
           "startTime": "16:00",
-          "title": "游沐日記",
-          "endTime": "21:00",
-          "category": "泡湯／晚餐",
-          "address": "上海市普陀區真北路2219號",
-          "businessHours": "24 小時營業",
-          "duration": "約 5 小時",
-          "notes": "泡湯、汗蒸、休息、水果、飲料、晚餐。"
+          "title": "妝髮準備",
+          "category": "活動",
+          "address": "北外灘來福士 3 樓，水星中庭 01-02"
+        },
+        {
+          "id": "d3-xudunhuang",
+          "startTime": "18:00",
+          "title": "敘宴・敘敦煌",
+          "category": "晚宴",
+          "address": "上海市虹口區東大名路999號，北外灘來福士3樓，水星中庭01-02",
+          "notes": "9/16 晚宴場；實際開始與結束時間依敘宴訂單。"
         },
         {
           "id": "d3-back-hotel",
@@ -368,7 +380,9 @@
           "title": "滴滴回飯店",
           "category": "交通",
           "transportMode": "taxi",
-          "address": "上海市黃浦區北京東路398號"
+          "address": "上海市黃浦區北京東路398號",
+          "flexible": true,
+          "transportNote": "晚宴結束後依實際散場時間搭滴滴回飯店。"
         }
       ],
       "transitSegments": [
@@ -383,18 +397,18 @@
         {
           "id": "d3-t2",
           "from": "上海千古情",
-          "to": "游沐日記",
+          "to": "敘宴・敘敦煌",
           "mode": "taxi",
           "detail": "滴滴",
           "duration": "依路況"
         },
         {
           "id": "d3-t3",
-          "from": "游沐日記",
+          "from": "敘宴・敘敦煌",
           "to": "飯店",
           "mode": "taxi",
           "detail": "滴滴",
-          "duration": "依路況"
+          "duration": "晚宴結束後"
         }
       ]
     },
@@ -402,8 +416,8 @@
       "id": "day-4",
       "dayNumber": 4,
       "date": "2026-09-17",
-      "title": "小楊生煎・MANNER・北外灘・敘敦煌",
-      "overview": "早上吃生煎、喝咖啡看浦東天際線，下午在北外灘銜接敘宴與妝髮。",
+      "title": "小楊生煎・MANNER・北外灘・游沐日記",
+      "overview": "早上吃生煎、喝咖啡看浦東天際線，下午在北外灘散步後前往游沐日記泡湯與休息。",
       "items": [
         {
           "id": "d4-hotel-leave",
@@ -462,34 +476,32 @@
           "duration": "約 75 分鐘"
         },
         {
-          "id": "d4-to-xuyan",
+          "id": "d4-to-youmu",
           "startTime": "15:00",
-          "title": "前往敘宴",
+          "title": "滴滴 → 游沐日記",
+          "endTime": "16:00",
           "category": "交通",
-          "transportMode": "walk",
-          "transportNote": "前往北外灘來福士內敘宴／敘敦煌。"
+          "transportMode": "taxi",
+          "transportNote": "北外灘來福士 → 游沐日記，預留路況與入場時間。"
         },
         {
-          "id": "d4-checkin",
-          "startTime": "15:45",
-          "title": "敘宴報到",
-          "category": "活動",
-          "address": "上海市虹口區東大名路999號，北外灘來福士 3 樓"
-        },
-        {
-          "id": "d4-makeup",
+          "id": "d4-youmu",
           "startTime": "16:00",
-          "title": "妝髮準備",
-          "category": "活動",
-          "address": "北外灘來福士 3 樓，水星中庭 01-02"
+          "title": "游沐日記",
+          "endTime": "21:00",
+          "category": "泡湯／晚餐",
+          "address": "上海市普陀區真北路2219號",
+          "businessHours": "24 小時營業",
+          "duration": "約 5 小時",
+          "notes": "泡湯、汗蒸、休息、水果、飲料、晚餐。"
         },
         {
-          "id": "d4-xudunhuang",
-          "startTime": "18:00",
-          "title": "敘宴・敘敦煌",
-          "category": "晚宴",
-          "address": "上海市虹口區東大名路999號，北外灘來福士3樓，水星中庭01-02",
-          "notes": "實際開始時間依敘宴安排。"
+          "id": "d4-back-hotel",
+          "startTime": "21:00",
+          "title": "滴滴回飯店",
+          "category": "交通",
+          "transportMode": "taxi",
+          "address": "上海市黃浦區北京東路398號"
         }
       ],
       "transitSegments": [
@@ -520,10 +532,18 @@
         {
           "id": "d4-t4",
           "from": "北外灘來福士",
-          "to": "敘宴・敘敦煌",
-          "mode": "walk",
-          "detail": "商場內步行",
-          "duration": "約 5 分鐘"
+          "to": "游沐日記",
+          "mode": "taxi",
+          "detail": "滴滴",
+          "duration": "依路況"
+        },
+        {
+          "id": "d4-t5",
+          "from": "游沐日記",
+          "to": "飯店",
+          "mode": "taxi",
+          "detail": "滴滴",
+          "duration": "依路況"
         }
       ]
     },

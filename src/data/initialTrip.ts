@@ -347,8 +347,8 @@ export const INITIAL_TRIP: TripDocument = {
     day(
       3,
       "2026-09-16",
-      "上海千古情＋游沐日記",
-      "早餐後搭滴滴前往上海千古情，下午回市區泡湯、汗蒸與休息。",
+      "上海千古情・敘敦煌",
+      "早餐後搭滴滴前往上海千古情，下午前往北外灘來福士，銜接敘宴妝髮與敘敦煌晚宴。",
       [
         item("d3-breakfast", "07:30", "飯店早餐或附近麵店", {
           endTime: "08:15",
@@ -377,36 +377,44 @@ export const INITIAL_TRIP: TripDocument = {
           duration: "約 4 小時",
           notes: "上海千古情景區與演出；請依票券確認當日場次，並預留報到時間。"
         }),
-        item("d3-to-youmu", "14:30", "滴滴 → 游沐日記", {
+        item("d3-to-xuyan", "14:30", "滴滴 → 敘宴・敘敦煌", {
+          endTime: "15:20",
           category: "交通",
           transportMode: "taxi",
-          transportNote: "從上海千古情搭滴滴前往游沐日記，依路況。"
+          transportNote: "從上海千古情搭滴滴前往北外灘來福士，預留報到與妝髮時間；依路況。"
         }),
-        item("d3-youmu", "16:00", "游沐日記", {
-          endTime: "21:00",
-          category: "泡湯／晚餐",
-          address: "上海市普陀區真北路2219號",
-          businessHours: "24 小時營業",
-          duration: "約 5 小時",
-          notes: "泡湯、汗蒸、休息、水果、飲料、晚餐。"
+        item("d3-checkin", "15:45", "敘宴報到", {
+          category: "活動",
+          address: "上海市虹口區東大名路999號，北外灘來福士 3 樓"
+        }),
+        item("d3-makeup", "16:00", "妝髮準備", {
+          category: "活動",
+          address: "北外灘來福士 3 樓，水星中庭 01-02"
+        }),
+        item("d3-xudunhuang", "18:00", "敘宴・敘敦煌", {
+          category: "晚宴",
+          address: "上海市虹口區東大名路999號，北外灘來福士3樓，水星中庭01-02",
+          notes: "9/16 晚宴場；實際開始與結束時間依敘宴訂單。"
         }),
         item("d3-back-hotel", "21:00", "滴滴回飯店", {
           category: "交通",
           transportMode: "taxi",
-          address: "上海市黃浦區北京東路398號"
+          address: "上海市黃浦區北京東路398號",
+          flexible: true,
+          transportNote: "晚宴結束後依實際散場時間搭滴滴回飯店。"
         })
       ],
       [
         segment("d3-t1", "飯店", "上海千古情", "taxi", "滴滴", "依路況"),
-        segment("d3-t2", "上海千古情", "游沐日記", "taxi", "滴滴", "依路況"),
-        segment("d3-t3", "游沐日記", "飯店", "taxi", "滴滴", "依路況")
+        segment("d3-t2", "上海千古情", "敘宴・敘敦煌", "taxi", "滴滴", "依路況"),
+        segment("d3-t3", "敘宴・敘敦煌", "飯店", "taxi", "滴滴", "晚宴結束後")
       ]
     ),
     day(
       4,
       "2026-09-17",
-      "小楊生煎・MANNER・北外灘・敘敦煌",
-      "早上吃生煎、喝咖啡看浦東天際線，下午在北外灘銜接敘宴與妝髮。",
+      "小楊生煎・MANNER・北外灘・游沐日記",
+      "早上吃生煎、喝咖啡看浦東天際線，下午在北外灘散步後前往游沐日記泡湯與休息。",
       [
         item("d4-hotel-leave", "09:00", "飯店出發", {
           category: "交通",
@@ -446,30 +454,32 @@ export const INITIAL_TRIP: TripDocument = {
           address: "上海市虹口區東大名路999號",
           duration: "約 75 分鐘"
         }),
-        item("d4-to-xuyan", "15:00", "前往敘宴", {
+        item("d4-to-youmu", "15:00", "滴滴 → 游沐日記", {
+          endTime: "16:00",
           category: "交通",
-          transportMode: "walk",
-          transportNote: "前往北外灘來福士內敘宴／敘敦煌。"
+          transportMode: "taxi",
+          transportNote: "北外灘來福士 → 游沐日記，預留路況與入場時間。"
         }),
-        item("d4-checkin", "15:45", "敘宴報到", {
-          category: "活動",
-          address: "上海市虹口區東大名路999號，北外灘來福士 3 樓"
+        item("d4-youmu", "16:00", "游沐日記", {
+          endTime: "21:00",
+          category: "泡湯／晚餐",
+          address: "上海市普陀區真北路2219號",
+          businessHours: "24 小時營業",
+          duration: "約 5 小時",
+          notes: "泡湯、汗蒸、休息、水果、飲料、晚餐。"
         }),
-        item("d4-makeup", "16:00", "妝髮準備", {
-          category: "活動",
-          address: "北外灘來福士 3 樓，水星中庭 01-02"
-        }),
-        item("d4-xudunhuang", "18:00", "敘宴・敘敦煌", {
-          category: "晚宴",
-          address: "上海市虹口區東大名路999號，北外灘來福士3樓，水星中庭01-02",
-          notes: "實際開始時間依敘宴安排。"
+        item("d4-back-hotel", "21:00", "滴滴回飯店", {
+          category: "交通",
+          transportMode: "taxi",
+          address: "上海市黃浦區北京東路398號"
         })
       ],
       [
         segment("d4-t1", "飯店", "小楊生煎福州路店", "walk", "步行", "依體力"),
         segment("d4-t2", "福州路店", "MANNER 國客濱江店", "taxi", "滴滴", "依路況"),
         segment("d4-t3", "MANNER", "北外灘濱江", "walk", "步行", "約 5 分鐘"),
-        segment("d4-t4", "北外灘來福士", "敘宴・敘敦煌", "walk", "商場內步行", "約 5 分鐘")
+        segment("d4-t4", "北外灘來福士", "游沐日記", "taxi", "滴滴", "依路況"),
+        segment("d4-t5", "游沐日記", "飯店", "taxi", "滴滴", "依路況")
       ]
     ),
     day(
