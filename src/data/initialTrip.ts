@@ -377,26 +377,35 @@ export const INITIAL_TRIP: TripDocument = {
           duration: "約 4 小時",
           notes: "上海千古情景區與演出；請依票券確認當日場次，並預留報到時間。"
         }),
-        item("d3-to-xuyan", "14:30", "滴滴 → 敘宴・敘敦煌", {
-          endTime: "15:20",
+        item("d3-free-after-qianguqing", "14:30", "千古情後自由活動／休息", {
+          endTime: "16:00",
+          category: "留白",
+          flexible: true,
+          duration: "約 90 分鐘",
+          notes: "可在園區或附近簡單休息；16:00 出發前往敘敦煌。"
+        }),
+        item("d3-to-xuyan", "16:00", "滴滴 → 敘宴・敘敦煌", {
+          endTime: "16:50",
           category: "交通",
           transportMode: "taxi",
-          transportNote: "從上海千古情搭滴滴前往北外灘來福士，預留報到與妝髮時間；依路況。"
+          duration: "約 50 分鐘",
+          transportNote: "16:00 從上海千古情附近出發，目標 16:50 抵達北外灘來福士；依路況。"
         }),
-        item("d3-checkin", "15:45", "敘宴報到", {
+        item("d3-xuyan-prep", "16:50", "抵達敘宴／妝髮與入場準備", {
+          endTime: "18:50",
           category: "活動",
-          address: "上海市虹口區東大名路999號，北外灘來福士 3 樓"
+          address: "北外灘來福士 3 樓，水星中庭 01-02",
+          duration: "約 2 小時",
+          notes: "16:50 抵達；吳庭樺妝髮並等候晚宴入場。"
         }),
-        item("d3-makeup", "16:00", "妝髮準備", {
-          category: "活動",
-          address: "北外灘來福士 3 樓，水星中庭 01-02"
-        }),
-        item("d3-xudunhuang", "18:00", "敘宴・敘敦煌", {
+        item("d3-xudunhuang", "18:50", "敘宴・敘敦煌", {
+          endTime: "20:30",
           category: "晚宴",
           address: "上海市虹口區東大名路999號，北外灘來福士3樓，水星中庭01-02",
-          notes: "9/16 晚宴場；實際開始與結束時間依敘宴訂單。"
+          duration: "約 100 分鐘",
+          notes: "9/16 晚宴場：18:50–20:30。"
         }),
-        item("d3-back-hotel", "21:00", "滴滴回飯店", {
+        item("d3-back-hotel", "20:30", "滴滴回飯店", {
           category: "交通",
           transportMode: "taxi",
           address: "上海市黃浦區北京東路398號",
@@ -406,7 +415,7 @@ export const INITIAL_TRIP: TripDocument = {
       ],
       [
         segment("d3-t1", "飯店", "上海千古情", "taxi", "滴滴", "依路況"),
-        segment("d3-t2", "上海千古情", "敘宴・敘敦煌", "taxi", "滴滴", "依路況"),
+        segment("d3-t2", "上海千古情", "敘宴・敘敦煌", "taxi", "滴滴", "約 50 分鐘"),
         segment("d3-t3", "敘宴・敘敦煌", "飯店", "taxi", "滴滴", "晚宴結束後")
       ]
     ),
