@@ -335,22 +335,32 @@
         {
           "id": "d3-qianguqing",
           "startTime": "10:30",
-          "title": "上海千古情",
-          "endTime": "14:30",
-          "category": "景點／演出",
+          "title": "上海千古情景區／午餐與入場",
+          "endTime": "14:00",
+          "category": "景點／入場",
           "address": "上海市浦東新區世博大道1750號",
           "businessHours": "景區／演出場次依當日公告",
-          "duration": "約 4 小時",
-          "notes": "上海千古情景區與演出；請依票券確認當日場次，並預留報到時間。"
+          "duration": "約 3 小時 30 分鐘",
+          "notes": "園區走逛、午餐、取票與入場準備；14:00 觀看上海千古情演出。"
+        },
+        {
+          "id": "d3-qianguqing-show",
+          "startTime": "14:00",
+          "title": "上海千古情演出",
+          "endTime": "15:00",
+          "category": "演出",
+          "address": "上海市浦東新區世博大道1750號",
+          "duration": "約 60 分鐘",
+          "notes": "9/16 已安排觀看：14:00–15:00。"
         },
         {
           "id": "d3-free-after-qianguqing",
-          "startTime": "14:30",
+          "startTime": "15:00",
           "title": "千古情後自由活動／休息",
           "endTime": "16:00",
           "category": "留白",
           "flexible": true,
-          "duration": "約 90 分鐘",
+          "duration": "約 60 分鐘",
           "notes": "可在園區或附近簡單休息；16:00 出發前往敘敦煌。"
         },
         {
