@@ -26,7 +26,13 @@ const segment = (
 const tasks: TripTask[] = [
   { id: "task-passport", title: "確認護照與台胞證", category: "證件", completed: false },
   { id: "task-sim", title: "準備網卡／中國門號", category: "網路", completed: false },
-  { id: "task-charger", title: "準備充電器、轉接頭與行動電源", category: "行李", completed: false },
+  {
+    id: "task-charger",
+    title: "準備充電器、轉接頭與行動電源",
+    category: "行李",
+    completed: false,
+    notes: "行動電源規範嚴格；也可先在淘寶購買後寄送飯店，大陸購買的規格較容易符合當地規範。"
+  },
   { id: "task-medicine", title: "準備常備藥品", category: "行李", completed: false },
   { id: "task-tickets", title: "確認機票、訂位與付款資料", category: "行程", completed: false },
   { id: "task-checkout", title: "退房、確認房間並取回行李", category: "返程", completed: false }
@@ -200,14 +206,16 @@ export const INITIAL_TRIP: TripDocument = {
           category: "抵達手續",
           address: "上海浦東國際機場 T2",
           duration: "約 60 分鐘",
-          notes: "完成提領行李後申辦中國門號。"
+          notes:
+            "完成提領行李後申辦中國門號。入境走本國人通道，也可申請快速通關（快捷通道信息採集）；旅客服務中心可拿地圖，電子看板可查看位置。\n\n浦東 T2 麥當勞左側有中國移動可辦門號卡；辦完可用小程序或客服申請改為月租 8 元方案，若無法處理可反映 12381。回台後下載《無憂行》App 仍可收簡訊；大陸門號綁外送平台通常較有優惠。"
         }),
         item("d1-maglev", "13:05", "浦東機場搭磁浮 → 龍陽路", {
           endTime: "13:30",
           category: "交通",
           transportMode: "maglev",
-          transportNote: "含前往月台、候車與約 8 分鐘車程。",
-          duration: "約 25 分鐘"
+          transportNote: "找人工售票窗口，搭磁浮至龍陽路；含前往月台、候車與約 7–8 分鐘車程。",
+          duration: "約 25 分鐘",
+          notes: "憑機票票根可折抵人民幣 10 元；請於購票時向人工窗口確認。"
         }),
         item("d1-hotel-transfer", "13:30", "龍陽路 → 滴滴 → 飯店", {
           endTime: "14:00",
@@ -600,14 +608,16 @@ export const INITIAL_TRIP: TripDocument = {
           endTime: "17:30",
           category: "機場",
           address: "上海浦東國際機場",
-          notes: "預計 17:00 左右抵達。"
+          notes:
+            "預計 17:00 左右抵達。出境前可在手扶梯旁的離境退稅海關檢核機台辦理；購物時記得索取退稅申請單與發票。"
         }),
         item("d5-checkin-flight", "17:30", "長榮 BR721 報到、安檢與退稅／採買", {
           endTime: "20:05",
           category: "機場手續",
           address: "上海浦東國際機場",
           duration: "約 2 小時 35 分鐘",
-          notes: "預留報到、安檢與退稅／採買時間。"
+          notes:
+            "預留報到、安檢與退稅／採買時間。退稅檢核完成後到 D83 登機口領取退稅款，部分商店可現場退稅。\n\n浦東機場免稅保養品價格不錯。回台前可用《浦樂GO》點餐送到登機口（樓內閃送）；需大陸門號，且店家是否開放、送達時間都要先確認。"
         }),
         item("d5-flight-home", "20:05", "BR721 起飛・回桃園", {
           endTime: "22:00",
