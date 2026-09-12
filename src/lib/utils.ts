@@ -171,6 +171,37 @@ export function openMeituan(name: string): void {
   }, 900);
 }
 
+export function getDidiFallbackUrl(): string {
+  return "https://www.didiglobal.com/";
+}
+
+export async function openDidi(title: string, address?: string): Promise<boolean> {
+  const destination = address ? `${title} ${address}` : title;
+  const copiedDestination = await copyText(destination);
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const fallbackUrl = getDidiFallbackUrl();
+
+  if (!isMobile) {
+    window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+    return copiedDestination;
+  }
+
+  // 滴滴未提供可免 App ID／Token 使用的公開目的地預填 URI；因此先複製
+  // 目的地，再開啟已安裝的滴滴 App，讓使用者在 App 內確認上車點與叫車。
+  let leftPage = false;
+  const onVisibilityChange = () => {
+    leftPage = document.visibilityState === "hidden";
+  };
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  window.location.href = "diditaxi://";
+  window.setTimeout(() => {
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    if (!leftPage && document.visibilityState === "visible") window.location.href = fallbackUrl;
+  }, 900);
+
+  return copiedDestination;
+}
+
 export async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);

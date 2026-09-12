@@ -156,6 +156,7 @@ button:disabled {
 .text-button,
 .text-action,
 .amap-button,
+.didi-button,
 .primary-button,
 .secondary-button,
 .manager-button {
@@ -776,7 +777,9 @@ button:disabled {
 }
 
 .next-actions .amap-button,
-.hotel-actions .amap-button {
+.next-actions .didi-button,
+.hotel-actions .amap-button,
+.hotel-actions .didi-button {
   margin-top: 0;
 }
 
@@ -1311,6 +1314,35 @@ button:disabled {
   padding: 12px;
   color: var(--ink-soft);
   background: var(--surface-soft);
+}
+
+.didi-button {
+  gap: 6px;
+  width: fit-content;
+  padding: 8px 10px;
+  border: 1px solid #edb975;
+  border-radius: 10px;
+  color: #8c541c;
+  background: #fff4e5;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.didi-button:hover {
+  border-color: #d88d30;
+  color: #713d0f;
+  background: #ffecd3;
+}
+
+.didi-button.is-full {
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px;
+}
+
+.didi-button.is-compact {
+  padding: 5px 7px;
+  font-size: 11px;
 }
 
 .text-action {

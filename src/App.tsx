@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  Car,
   Check,
   ClipboardCheck,
   CloudSun,
@@ -96,6 +97,7 @@ import {
   isTripDocument,
   makeId,
   openAmap,
+  openDidi,
   openMeituan,
   parseTime,
   resolveReferenceDay,
@@ -1084,6 +1086,7 @@ function TodayPage({
   const nextItem = progress.next;
   const currentItem = progress.current;
   const nextDate = nextItem ? getItemDate(reference.day, nextItem) : undefined;
+  const nextSupportsDidi = Boolean(nextItem && canRequestDidi(nextItem));
   const isBeforeTrip = reference.relation === "before";
   const statusText = isBeforeTrip
     ? "旅程尚未開始"
@@ -1158,7 +1161,7 @@ function TodayPage({
                 {nextItem.businessHours && <p><Clock3 size={15} />{nextItem.businessHours}</p>}
                 {nextItem.transportMode && <TransportChip mode={nextItem.transportMode} />}
               </div>
-              {(nextItem.address || nextItem.phone) && <div className="next-actions"><AddressActions address={nextItem.address} phone={nextItem.phone} />{nextItem.address && <AmapButton title={nextItem.title} address={nextItem.address} />}</div>}
+              {(nextItem.address || nextItem.phone || nextSupportsDidi) && <div className="next-actions">{nextSupportsDidi && <DidiButton title={nextItem.title} address={nextItem.address} />}{nextItem.address && <AmapButton title={nextItem.title} address={nextItem.address} />}<AddressActions address={nextItem.address} phone={nextItem.phone} /></div>}
             </>
           ) : (
             <div className="empty-message">今天沒有更多排程。</div>
@@ -1392,6 +1395,7 @@ function ItineraryCard({
   onToggleComplete: () => void;
   onViewTraffic: () => void;
 }) {
+  const supportsDidi = canRequestDidi(item);
   return (
     <article
       className={`itinerary-row ${isDragging ? "is-dragging" : ""} ${item.completed ? "is-complete" : ""}`}
@@ -1423,6 +1427,7 @@ function ItineraryCard({
         </div>
         {item.notes && <p className="item-notes">{item.notes}</p>}
         <div className="item-actions">
+          {supportsDidi && <DidiButton title={item.title} address={item.address} />}
           {item.address && <AmapButton title={item.title} address={item.address} />}
           <AddressActions address={item.address} phone={item.phone} />
           <button className="text-action" onClick={onViewTraffic}><Route size={15} />查看交通</button>
@@ -1445,7 +1450,7 @@ function TransitCard({ segments, compact = false }: { segments: TransitSegment[]
           {segments.map((segment) => (
             <div className="transit-segment" key={segment.id}>
               <div className={`transport-symbol mode-${segment.mode}`}>{TRANSPORT_EMOJI[segment.mode]}</div>
-              <div className="transit-route"><strong>{segment.from}</strong><ChevronRight size={15} /><strong>{segment.to}</strong><span>{segment.detail ?? TRANSPORT_LABELS[segment.mode]}{segment.duration ? ` · ${segment.duration}` : ""}</span></div>
+              <div className="transit-route"><strong>{segment.from}</strong><ChevronRight size={15} /><strong>{segment.to}</strong><span>{segment.detail ?? TRANSPORT_LABELS[segment.mode]}{segment.duration ? ` · ${segment.duration}` : ""}</span>{segment.mode === "taxi" && <DidiButton title={segment.to} label="滴滴叫車" compact />}</div>
               <span className="transport-label">{TRANSPORT_LABELS[segment.mode]}</span>
             </div>
           ))}
@@ -1512,7 +1517,7 @@ function RestaurantCard({
       <h2>{restaurant.name}</h2>
       <div className="restaurant-details"><div className="detail-line"><MapPin size={16} /><span>{restaurant.address ?? "地址待補資料"}</span></div><div className="detail-line"><Clock3 size={16} /><span>{restaurant.businessHours ?? "營業時間待補資料"}</span></div><div className="detail-line"><Map size={16} /><span>{restaurant.area ?? "所在區域待補資料"}</span></div></div>
       {restaurant.notes && <p className="item-notes">{restaurant.notes}</p>}
-      <div className="restaurant-actions"><AmapButton title={restaurant.name} address={restaurant.address} /><AddressActions address={restaurant.address} phone={restaurant.phone} /><button className="text-action" onClick={() => openMeituan(restaurant.name)}><Search size={15} />美團搜尋</button>{!assignment && <button className="text-action strong-action" onClick={onAddToSchedule}><Plus size={15} />加入行程</button>}{assignment && managerMode && <button className="text-action strong-action" onClick={onRemoveFromSchedule}><RotateCcw size={15} />移回備選</button>}</div>
+      <div className="restaurant-actions"><DidiButton title={restaurant.name} address={restaurant.address} /><AmapButton title={restaurant.name} address={restaurant.address} /><AddressActions address={restaurant.address} phone={restaurant.phone} /><button className="text-action" onClick={() => openMeituan(restaurant.name)}><Search size={15} />美團搜尋</button>{!assignment && <button className="text-action strong-action" onClick={onAddToSchedule}><Plus size={15} />加入行程</button>}{assignment && managerMode && <button className="text-action strong-action" onClick={onRemoveFromSchedule}><RotateCcw size={15} />移回備選</button>}</div>
       <button className="copy-search-link" onClick={async () => { const copied = await copyText(restaurant.name); if (copied) window.alert(`已複製「${restaurant.name}」，可貼到美團搜尋。`); }}><Clipboard size={14} />無法開啟美團？一鍵複製名稱</button>
     </article>
   );
@@ -1559,9 +1564,9 @@ function TripInfoPage({
   return (
     <div className="page-stack trip-page">
       <PageIntro eyebrow="TRIP INFO" title="旅程" description="重要資料集中在這裡，出發前與路上都能快速查看。" action={managerMode ? <button className="secondary-button compact-button" onClick={onEdit}><Pencil size={16} /> 編輯資料</button> : undefined} />
-      <section className="info-card hotel-card"><div className="info-card-icon"><Hotel size={22} /></div><div className="info-card-content"><span className="eyebrow">HOTEL</span><h2>{hotel.name}</h2><p>{hotel.address}</p>{hotel.phone && <p className="contact-line"><span>電話</span><a href={`tel:${hotel.phone}`}>{hotel.phone}</a></p>}<div className="hotel-actions"><AmapButton title={hotel.name} address={hotel.address} /><AddressActions address={hotel.address} phone={hotel.phone} /></div></div></section>
+      <section className="info-card hotel-card"><div className="info-card-icon"><Hotel size={22} /></div><div className="info-card-content"><span className="eyebrow">HOTEL</span><h2>{hotel.name}</h2><p>{hotel.address}</p>{hotel.phone && <p className="contact-line"><span>電話</span><a href={`tel:${hotel.phone}`}>{hotel.phone}</a></p>}<div className="hotel-actions"><DidiButton title={hotel.name} address={hotel.address} /><AmapButton title={hotel.name} address={hotel.address} /><AddressActions address={hotel.address} phone={hotel.phone} /></div></div></section>
       <section className="info-card"><div className="info-card-icon flight-icon"><Plane size={22} /></div><div className="info-card-content"><span className="eyebrow">FLIGHTS</span><h2>航班</h2><div className="flight-list">{flights.map((flight) => <div className="flight-row" key={flight.id}><span className="flight-label">{flight.label}</span><div><strong>{flight.flightNumber ?? "航班待補"}</strong><span>{formatDate(flight.date)} · {flight.time}</span><span>{flight.route}</span></div></div>)}</div></div></section>
-      <section className="quick-links-card"><div className="section-heading"><div><span className="eyebrow">QUICK NAVIGATION</span><h2>快速導航</h2></div><Navigation size={19} /></div><div className="quick-link-list"><AmapButton title={hotel.name} address={hotel.address} label="飯店高德導航" full /><AmapButton title={trip.info.airport} address={trip.info.airport} label="浦東機場導航" full /><AmapButton title={trip.info.maglevStation} label="龍陽路磁浮站導航" full /></div></section>
+      <section className="quick-links-card"><div className="section-heading"><div><span className="eyebrow">QUICK NAVIGATION</span><h2>快速導航</h2></div><Navigation size={19} /></div><div className="quick-link-list"><DidiButton title={hotel.name} address={hotel.address} label="飯店滴滴叫車" full /><AmapButton title={hotel.name} address={hotel.address} label="飯店高德導航" full /><DidiButton title={trip.info.airport} address={trip.info.airport} label="浦東機場滴滴叫車" full /><AmapButton title={trip.info.airport} address={trip.info.airport} label="浦東機場導航" full /><DidiButton title={trip.info.maglevStation} label="龍陽路磁浮站叫車" full /><AmapButton title={trip.info.maglevStation} label="龍陽路磁浮站導航" full /></div></section>
       <MetroMapCard />
       {members.length > 0 && <section className="info-card members-card"><div className="info-card-icon"><Users size={22} /></div><div className="info-card-content"><span className="eyebrow">TRAVEL PARTY</span><h2>成員</h2><div className="member-list">{members.map((member) => <span key={member}>{member}</span>)}</div></div></section>}
       <TaskChecklist tasks={trip.tasks} managerMode={managerMode} onAdd={onAddTask} onEdit={onEditTask} onDelete={onDeleteTask} onToggle={onToggleTask} />
@@ -1795,6 +1800,22 @@ function BottomNavigation({ activePage, onNavigate }: { activePage: Page; onNavi
 
 function AmapButton({ title, address, label = "高德導航", full = false }: { title: string; address?: string; label?: string; full?: boolean }) {
   return <button className={`amap-button ${full ? "is-full" : ""}`} onClick={() => openAmap(title, address)}><Navigation size={15} />{label}<ExternalLink size={13} /></button>;
+}
+
+function DidiButton({ title, address, label = "滴滴叫車", full = false, compact = false }: { title: string; address?: string; label?: string; full?: boolean; compact?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const handleOpen = async () => {
+    const copiedDestination = await openDidi(title, address);
+    if (!copiedDestination) return;
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2200);
+  };
+  return <button className={`didi-button ${full ? "is-full" : ""} ${compact ? "is-compact" : ""}`} onClick={() => void handleOpen()} aria-label={`開啟滴滴叫車${address ? `，並複製 ${title} 的目的地` : ""}`}><Car size={compact ? 13 : 15} />{copied ? "目的地已複製" : label}<ExternalLink size={compact ? 11 : 13} /></button>;
+}
+
+function canRequestDidi(item: Pick<ItineraryItem, "address" | "transportMode">): boolean {
+  if (item.transportMode === "taxi") return true;
+  return Boolean(item.address && !/桃園|台灣|臺灣/.test(item.address));
 }
 
 function AddressActions({ address, phone }: { address?: string; phone?: string }) {
