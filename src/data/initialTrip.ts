@@ -179,81 +179,112 @@ export const INITIAL_TRIP: TripDocument = {
     day(
       1,
       "2026-09-14",
-      "抵達上海・沙美大樓・外灘・李百蟹",
-      "抵達浦東後進市區，入住外灘，再用散步與夜景開啟上海行程。",
+      "抵達上海・沙美大樓・李百蟹・外灘・紅盔甲",
+      "抵達浦東後進市區，下午走沙美大樓、李百蟹與外灘，晚上到紅盔甲小龍蝦直接用餐。",
       [
+        item("d1-checkin-counter", "07:25", "長榮 BR712 開櫃・23 號櫃台", {
+          endTime: "09:20",
+          category: "機場報到",
+          address: "桃園國際機場第二航廈",
+          notes: "07:25 開櫃，23 號櫃台；請依當日機場螢幕與航空公司通知為準。"
+        }),
         item("d1-flight", "09:55", "BR712 桃園起飛", {
           endTime: "12:05",
           category: "航班",
           transportMode: "flight",
-          address: "桃園國際機場",
+          address: "桃園國際機場第二航廈",
           notes: "去程航班；約 12:05 抵達浦東機場 T2。"
         }),
-        item("d1-arrival", "12:05", "抵達浦東機場 T2", {
-          category: "抵達",
-          address: "上海浦東國際機場 T2",
-        }),
-        item("d1-mobile", "12:30", "中國移動辦 +86 門號", {
+        item("d1-arrival-mobile", "12:05", "提領行李、申辦 +86 門號", {
+          endTime: "13:05",
           category: "抵達手續",
           address: "上海浦東國際機場 T2",
-          businessHours: "07:00–22:00",
-          notes: "通關後辦理中國移動門號；T2 到達公眾區，找星巴克附近中國移動。"
+          duration: "約 60 分鐘",
+          notes: "完成提領行李後申辦中國門號。"
         }),
-        item("d1-maglev", "13:45", "浦東機場搭磁浮 → 龍陽路", {
+        item("d1-maglev", "13:05", "浦東機場搭磁浮 → 龍陽路", {
+          endTime: "13:30",
           category: "交通",
           transportMode: "maglev",
-          transportNote: "上海磁浮；浦東 → 龍陽路約 8 分鐘，營運約 07:02–21:42。",
-          duration: "約 8 分鐘"
+          transportNote: "含前往月台、候車與約 8 分鐘車程。",
+          duration: "約 25 分鐘"
         }),
-        item("d1-hotel-transfer", "14:20", "龍陽路 → 滴滴 → 飯店", {
+        item("d1-hotel-transfer", "13:30", "龍陽路 → 滴滴 → 飯店", {
+          endTime: "14:00",
           category: "交通",
           transportMode: "taxi",
           transportNote: "從龍陽路站搭滴滴前往飯店。",
-          duration: "依路況"
+          duration: "約 30 分鐘"
         }),
-        item("d1-checkin", "15:00", "入住｜上海外灘璞硯酒店", {
+        item("d1-hotel-arrive", "14:00", "抵達飯店／寄放行李", {
+          endTime: "14:20",
           category: "住宿",
           address: "上海市黃浦區北京東路398號",
           businessHours: "全天櫃台",
-          notes: "先入住、整理行李。"
+          notes: "若房間尚未開放，先寄放行李後前往沙美大樓。"
         }),
-        item("d1-shamei", "15:15", "沙美大樓＋樓上咖啡", {
-          endTime: "16:20",
+        item("d1-shamei", "14:20", "沙美大樓＋樓上咖啡", {
+          endTime: "15:30",
           category: "景點／咖啡",
           address: "上海市黃浦區北京東路190號",
-          duration: "約 65 分鐘"
+          duration: "約 70 分鐘"
         }),
-        item("d1-nanjing", "16:30", "南京東路步行街", {
-          endTime: "17:20",
-          category: "散步",
-          address: "上海市黃浦區南京東路",
-          duration: "約 50 分鐘"
-        }),
-        item("d1-bund", "17:30", "外灘點燈／夜景", {
-          endTime: "19:00",
-          category: "景點",
-          address: "上海市黃浦區中山東一路",
-          duration: "約 90 分鐘"
-        }),
-        item("d1-libaixie", "19:20", "李百蟹", {
-          endTime: "20:45",
-          category: "晚餐",
+        item("d1-libaixie", "15:30", "李百蟹", {
+          endTime: "17:00",
+          category: "午餐／早晚餐",
           address: "上海市黃浦區中山東二路22號，外灘22號3樓",
           businessHours: "10:00–22:00",
-          notes: "紅盔甲小龍蝦使用美團外送。",
-          duration: "約 85 分鐘"
+          duration: "約 90 分鐘"
         }),
-        item("d1-back-hotel", "21:00", "回飯店", {
-          category: "住宿",
+        item("d1-nanjing", "17:00", "南京東路步行街", {
+          endTime: "18:30",
+          category: "散步",
+          address: "上海市黃浦區南京東路",
+          duration: "約 90 分鐘"
+        }),
+        item("d1-bund", "18:30", "外灘點燈拍照", {
+          endTime: "19:00",
+          category: "夜景",
+          address: "上海市黃浦區中山東一路",
+          duration: "約 30 分鐘"
+        }),
+        item("d1-free", "19:00", "自由活動／回飯店休息", {
+          endTime: "20:35",
+          category: "留白",
+          flexible: true,
+          duration: "約 95 分鐘",
+          notes: "20:35 再前往紅盔甲小龍蝦。"
+        }),
+        item("d1-to-hongkuijia", "20:35", "前往紅盔甲小龍蝦（人民廣場店）", {
+          endTime: "21:00",
+          category: "交通",
+          transportMode: "taxi",
+          transportNote: "從外灘／飯店附近依當時位置搭滴滴前往。",
+          duration: "約 25 分鐘"
+        }),
+        item("d1-hongkuijia", "21:00", "紅盔甲小龍蝦（人民廣場店）", {
+          endTime: "22:30",
+          category: "宵夜",
+          address: "上海市黃浦區金陵東路500號，亞龍國際廣場2樓",
+          phone: "+86-21-63216858",
+          businessHours: "16:30–次日 02:30",
+          duration: "約 90 分鐘",
+          notes: "直接到店用餐，不使用美團外送。"
+        }),
+        item("d1-back-hotel", "22:30", "滴滴回飯店", {
+          category: "交通",
           address: "上海市黃浦區北京東路398號",
           transportMode: "taxi",
-          transportNote: "滴滴或步行，依當時體力與路況。"
+          flexible: true,
+          transportNote: "用餐結束後依實際時間搭滴滴回飯店。"
         })
       ],
       [
         segment("d1-t1", "桃園國際機場", "上海浦東國際機場 T2", "flight", "BR712", "約 2 小時 10 分鐘"),
         segment("d1-t2", "浦東機場 T2", "龍陽路站", "maglev", "上海磁浮", "約 8 分鐘"),
-        segment("d1-t3", "龍陽路站", "上海外灘璞硯酒店", "taxi", "滴滴", "依路況")
+        segment("d1-t3", "龍陽路站", "上海外灘璞硯酒店", "taxi", "滴滴", "約 30 分鐘"),
+        segment("d1-t4", "外灘／飯店附近", "紅盔甲小龍蝦（人民廣場店）", "taxi", "滴滴", "約 25 分鐘"),
+        segment("d1-t5", "紅盔甲小龍蝦（人民廣場店）", "飯店", "taxi", "滴滴", "依路況")
       ]
     ),
     day(
@@ -268,24 +299,27 @@ export const INITIAL_TRIP: TripDocument = {
           address: "上海市黃浦區北京東路398號",
           duration: "約 60 分鐘"
         }),
-        item("d2-to-wukang", "09:00", "滴滴出發", {
+        item("d2-to-wukang", "09:00", "滴滴 → 武康大樓", {
+          endTime: "09:30",
           category: "交通",
           transportMode: "taxi",
-          transportNote: "飯店 → 武康大樓。"
+          transportNote: "飯店 → 武康大樓。",
+          duration: "約 30 分鐘"
         }),
         item("d2-wukang", "09:30", "武康大樓", {
-          endTime: "10:15",
+          endTime: "10:30",
           category: "景點",
           address: "上海市徐匯區淮海中路1850號",
           businessHours: "建築外觀全天可看",
-          duration: "約 45 分鐘"
+          duration: "約 60 分鐘",
+          notes: "拍照、走走。"
         }),
-        item("d2-walk-yuanyuan", "10:15", "步行前往圓苑（興國路店）", {
-          endTime: "10:35",
+        item("d2-walk-yuanyuan", "10:30", "步行前往圓苑（興國路店）", {
+          endTime: "10:50",
           category: "交通",
           transportMode: "walk",
-          transportNote: "武康大樓 → 圓苑（興國路店），步行約 15–20 分鐘。",
-          duration: "約 15–20 分鐘"
+          transportNote: "武康大樓 → 圓苑（興國路店）。",
+          duration: "約 20 分鐘"
         }),
         item("d2-yuanyuan", "11:00", "圓苑（興國路店）", {
           endTime: "12:30",
@@ -303,7 +337,7 @@ export const INITIAL_TRIP: TripDocument = {
           duration: "約 2 小時",
           notes: "午餐後路線：圓苑（興國路店）→ 巨鹿路 → 富民路 → 長樂路 → 東湖路 → 延慶路；中間安排咖啡、休息。"
         }),
-        item("d2-free", "14:30", "自由活動／休息", {
+        item("d2-free", "14:30", "空白／自由活動", {
           endTime: "16:45",
           category: "留白",
           duration: "約 2 小時 15 分鐘",
@@ -318,9 +352,11 @@ export const INITIAL_TRIP: TripDocument = {
           duration: "約 90 分鐘"
         }),
         item("d2-to-yuyuan", "19:00", "滴滴前往豫園", {
+          endTime: "19:30",
           category: "交通",
           transportMode: "taxi",
-          transportNote: "陝西南路店 → 豫園商城。"
+          transportNote: "陝西南路店 → 豫園商城。",
+          duration: "約 30 分鐘"
         }),
         item("d2-yuyuan", "19:30", "豫園商城・九曲橋・湖心亭夜景", {
           endTime: "21:00",
@@ -333,7 +369,8 @@ export const INITIAL_TRIP: TripDocument = {
         item("d2-back-hotel", "21:00", "滴滴回飯店", {
           category: "交通",
           transportMode: "taxi",
-          address: "上海市黃浦區北京東路398號"
+          address: "上海市黃浦區北京東路398號",
+          notes: "回飯店後可視情況使用美團外送。"
         })
       ],
       [
@@ -347,72 +384,73 @@ export const INITIAL_TRIP: TripDocument = {
     day(
       3,
       "2026-09-16",
-      "上海千古情・敘敦煌",
-      "早餐後搭滴滴前往上海千古情，下午前往北外灘來福士，銜接敘宴妝髮與敘敦煌晚宴。",
+      "小楊生煎・MANNER・北外灘・敘敦煌",
+      "早上吃小楊生煎、喝咖啡看浦東天際線，中午在北外灘與來福士活動，下午銜接敘宴妝髮與晚宴。",
       [
-        item("d3-breakfast", "07:30", "飯店早餐或附近麵店", {
-          endTime: "08:15",
-          category: "早餐",
-          flexible: true,
-          duration: "約 45 分鐘",
-          notes: "飯店早餐或依當天方便選擇附近麵店；08:30 出發前往上海千古情。"
-        }),
-        item("d3-hotel-leave", "08:30", "飯店出發", {
+        item("d3-hotel-leave", "09:00", "飯店出發", {
           category: "交通",
           address: "上海市黃浦區北京東路398號",
-          transportMode: "taxi",
-          transportNote: "搭滴滴／計程車前往上海千古情。"
+          transportMode: "walk",
+          transportNote: "步行前往小楊生煎福州路店。"
         }),
-        item("d3-to-qianguqing", "08:30", "滴滴 → 上海千古情", {
-          endTime: "09:30",
+        item("d3-xiaoyang", "09:15", "小楊生煎｜福州路店", {
+          endTime: "10:00",
+          category: "早餐",
+          address: "上海市黃浦區福州路567號1樓",
+          businessHours: "06:30–21:00",
+          sourceRestaurantId: "restaurant-xiaoyang-fuzhou",
+          duration: "約 45 分鐘"
+        }),
+        item("d3-to-manner", "10:00", "滴滴 → MANNER Coffee 國客濱江店", {
+          endTime: "10:30",
           category: "交通",
           transportMode: "taxi",
-          transportNote: "從飯店前往世博大道1750號，預留報到與入場時間；依路況。"
+          duration: "約 30 分鐘",
+          transportNote: "福州路店 → MANNER Coffee 國客濱江店。"
         }),
-        item("d3-qianguqing", "10:30", "上海千古情景區／午餐與入場", {
-          endTime: "14:00",
-          category: "景點／入場",
-          address: "上海市浦東新區世博大道1750號",
-          businessHours: "景區／演出場次依當日公告",
-          duration: "約 3 小時 30 分鐘",
-          notes: "園區走逛、午餐、取票與入場準備；14:00 觀看上海千古情演出。"
+        item("d3-manner", "10:30", "MANNER Coffee 國客濱江店", {
+          endTime: "12:00",
+          category: "咖啡／景色",
+          address: "北外灘國客中心碼頭海事塔區域",
+          businessHours: "平日 07:30–22:00；週末約 08:00–22:00",
+          duration: "約 90 分鐘",
+          notes: "喝咖啡、看東方明珠、拍浦東天際線。"
         }),
-        item("d3-qianguqing-show", "14:00", "上海千古情演出", {
+        item("d3-north-bund", "12:00", "北外灘濱江", {
+          endTime: "13:30",
+          category: "散步",
+          address: "上海市虹口區北外灘濱江",
+          duration: "約 90 分鐘"
+        }),
+        item("d3-raffles", "13:30", "北外灘來福士／午餐", {
           endTime: "15:00",
-          category: "演出",
-          address: "上海市浦東新區世博大道1750號",
-          duration: "約 60 分鐘",
-          notes: "9/16 已安排觀看：14:00–15:00。"
+          category: "商場／午餐",
+          address: "上海市虹口區東大名路999號",
+          duration: "約 90 分鐘",
+          notes: "午餐可視訂位與現場選擇巴奴火鍋或商場內餐廳；請先確認分店。"
         }),
-        item("d3-free-after-qianguqing", "15:00", "千古情後自由活動／休息", {
+        item("d3-to-xuyan", "15:00", "北外灘來福士／前往敘宴", {
           endTime: "16:00",
-          category: "留白",
-          flexible: true,
+          category: "休息／交通",
+          transportMode: "walk",
           duration: "約 60 分鐘",
-          notes: "可在園區或附近簡單休息；16:00 出發前往敘敦煌。"
+          transportNote: "於北外灘來福士內休息、整理後前往敘宴。"
         }),
-        item("d3-to-xuyan", "16:00", "滴滴 → 敘宴・敘敦煌", {
-          endTime: "16:50",
-          category: "交通",
-          transportMode: "taxi",
-          duration: "約 50 分鐘",
-          transportNote: "16:00 從上海千古情附近出發，目標 16:50 抵達北外灘來福士；依路況。"
-        }),
-        item("d3-xuyan-prep", "16:50", "抵達敘宴／妝髮與入場準備", {
+        item("d3-xuyan-prep", "16:00", "抵達敘宴／妝髮與入場準備", {
           endTime: "18:50",
           category: "活動",
           address: "北外灘來福士 3 樓，水星中庭 01-02",
-          duration: "約 2 小時",
-          notes: "16:50 抵達；吳庭樺妝髮並等候晚宴入場。"
+          duration: "約 2 小時 50 分鐘",
+          notes: "16:00 抵達；吳庭樺妝髮並等候晚宴入場。"
         }),
         item("d3-xudunhuang", "18:50", "敘宴・敘敦煌", {
-          endTime: "20:30",
+          endTime: "20:50",
           category: "晚宴",
           address: "上海市虹口區東大名路999號，北外灘來福士3樓，水星中庭01-02",
-          duration: "約 100 分鐘",
-          notes: "9/16 晚宴場：18:50–20:30。"
+          duration: "約 120 分鐘",
+          notes: "9/16 晚宴場：18:50–20:50。"
         }),
-        item("d3-back-hotel", "20:30", "滴滴回飯店", {
+        item("d3-back-hotel", "20:50", "滴滴回飯店", {
           category: "交通",
           transportMode: "taxi",
           address: "上海市黃浦區北京東路398號",
@@ -421,54 +459,47 @@ export const INITIAL_TRIP: TripDocument = {
         })
       ],
       [
-        segment("d3-t1", "飯店", "上海千古情", "taxi", "滴滴", "依路況"),
-        segment("d3-t2", "上海千古情", "敘宴・敘敦煌", "taxi", "滴滴", "約 50 分鐘"),
-        segment("d3-t3", "敘宴・敘敦煌", "飯店", "taxi", "滴滴", "晚宴結束後")
+        segment("d3-t1", "飯店", "小楊生煎福州路店", "walk", "步行", "約 15 分鐘"),
+        segment("d3-t2", "福州路店", "MANNER 國客濱江店", "taxi", "滴滴", "約 30 分鐘"),
+        segment("d3-t3", "MANNER", "北外灘濱江", "walk", "步行", "約 5 分鐘"),
+        segment("d3-t4", "北外灘濱江", "北外灘來福士", "walk", "步行", "約 5 分鐘"),
+        segment("d3-t5", "北外灘來福士", "敘宴・敘敦煌", "walk", "商場內步行", "約 5 分鐘"),
+        segment("d3-t6", "敘宴・敘敦煌", "飯店", "taxi", "滴滴", "晚宴結束後")
       ]
     ),
     day(
       4,
       "2026-09-17",
-      "小楊生煎・MANNER・北外灘・游沐日記",
-      "早上吃生煎、喝咖啡看浦東天際線，下午在北外灘散步後前往游沐日記泡湯與休息。",
+      "上海千古情・游沐日記",
+      "上午前往上海千古情，14:00 觀看主秀，下午銜接游沐日記泡湯、晚餐與休息。",
       [
         item("d4-hotel-leave", "09:00", "飯店出發", {
           category: "交通",
           address: "上海市黃浦區北京東路398號",
-          transportMode: "walk"
+          transportMode: "taxi",
+          transportNote: "搭滴滴前往上海千古情。"
         }),
-        item("d4-xiaoyang", "09:15", "小楊生煎｜福州路店", {
-          endTime: "09:55",
-          category: "早餐",
-          address: "上海市黃浦區福州路567號1樓",
-          businessHours: "06:30–21:00",
-          sourceRestaurantId: "restaurant-xiaoyang-fuzhou",
-          duration: "約 40 分鐘"
-        }),
-        item("d4-to-manner", "10:00", "滴滴前往 MANNER", {
+        item("d4-to-qianguqing", "09:00", "滴滴 → 上海千古情", {
+          endTime: "10:00",
           category: "交通",
           transportMode: "taxi",
-          transportNote: "福州路店 → MANNER Coffee 國客濱江店。"
+          duration: "約 60 分鐘",
+          transportNote: "飯店 → 上海千古情；依路況。"
         }),
-        item("d4-manner", "10:30", "MANNER Coffee 國客濱江店", {
-          endTime: "11:45",
-          category: "咖啡／景色",
-          address: "北外灘國客中心碼頭海事塔區域",
-          businessHours: "平日 07:30–22:00；週末約 08:00–22:00",
-          duration: "約 75 分鐘",
-          notes: "喝咖啡、看東方明珠、拍浦東天際線。"
+        item("d4-qianguqing", "10:00", "上海千古情景區／午餐與入場", {
+          endTime: "14:00",
+          category: "景點／入場",
+          address: "上海市浦東新區世博大道1750號",
+          businessHours: "景區／演出場次依當日公告",
+          duration: "約 4 小時",
+          notes: "園區走逛、午餐、取票與入場準備；14:00 觀看主秀。"
         }),
-        item("d4-north-bund", "11:45", "北外灘濱江", {
-          endTime: "13:45",
-          category: "散步",
-          address: "上海市虹口區北外灘濱江",
-          duration: "約 2 小時"
-        }),
-        item("d4-raffles", "13:45", "北外灘來福士", {
+        item("d4-qianguqing-show", "14:00", "上海千古情主秀", {
           endTime: "15:00",
-          category: "商場／休息",
-          address: "上海市虹口區東大名路999號",
-          duration: "約 75 分鐘"
+          category: "演出",
+          address: "上海市浦東新區世博大道1750號",
+          duration: "約 60 分鐘",
+          notes: "主秀時間 14:00。"
         }),
         item("d4-to-youmu", "15:00", "滴滴 → 游沐日記", {
           endTime: "16:00",
@@ -487,15 +518,14 @@ export const INITIAL_TRIP: TripDocument = {
         item("d4-back-hotel", "21:00", "滴滴回飯店", {
           category: "交通",
           transportMode: "taxi",
-          address: "上海市黃浦區北京東路398號"
+          address: "上海市黃浦區北京東路398號",
+          notes: "回飯店後可視情況美團外送，並整理行李。"
         })
       ],
       [
-        segment("d4-t1", "飯店", "小楊生煎福州路店", "walk", "步行", "依體力"),
-        segment("d4-t2", "福州路店", "MANNER 國客濱江店", "taxi", "滴滴", "依路況"),
-        segment("d4-t3", "MANNER", "北外灘濱江", "walk", "步行", "約 5 分鐘"),
-        segment("d4-t4", "北外灘來福士", "游沐日記", "taxi", "滴滴", "依路況"),
-        segment("d4-t5", "游沐日記", "飯店", "taxi", "滴滴", "依路況")
+        segment("d4-t1", "飯店", "上海千古情", "taxi", "滴滴", "約 60 分鐘"),
+        segment("d4-t2", "上海千古情", "游沐日記", "taxi", "滴滴", "約 60 分鐘"),
+        segment("d4-t3", "游沐日記", "飯店", "taxi", "滴滴", "依路況")
       ]
     ),
     day(
@@ -531,44 +561,68 @@ export const INITIAL_TRIP: TripDocument = {
           duration: "約 110 分鐘",
           notes: "本次正式安排的本幫菜。"
         }),
-        item("d5-near-hotel", "13:10", "回飯店附近", {
+        item("d5-free-after-lunch", "13:10", "人民廣場附近自由活動", {
+          endTime: "15:15",
           category: "留白",
           flexible: true,
-          address: "上海市黃浦區北京東路398號"
+          address: "上海市黃浦區人民廣場",
+          duration: "約 2 小時 5 分鐘"
         }),
-        item("d5-pick-luggage", "14:30", "回飯店取行李", {
+        item("d5-to-hotel", "15:15", "返回飯店取行李", {
+          endTime: "15:30",
+          category: "交通",
+          transportMode: "taxi",
+          address: "上海市黃浦區北京東路398號",
+          duration: "約 15 分鐘",
+          transportNote: "人民廣場附近 → 飯店。"
+        }),
+        item("d5-pick-luggage", "15:30", "回飯店取行李", {
+          endTime: "16:00",
           category: "住宿／行李",
           address: "上海市黃浦區北京東路398號",
-          notes: "取回行李後在飯店附近休息，16:00 再搭車前往龍陽路。"
+          notes: "取回行李後，16:00 準時搭車前往龍陽路。"
         }),
         item("d5-to-longyang", "16:00", "滴滴 → 龍陽路磁浮站", {
+          endTime: "16:30",
           category: "交通",
           transportMode: "taxi",
           transportNote: "16:00 從飯店搭車；飯店 → 龍陽路磁浮站，依路況約 30 分鐘。",
           duration: "約 30 分鐘"
         }),
         item("d5-maglev", "16:30", "龍陽路 → 上海磁浮 → 浦東國際機場", {
+          endTime: "16:40",
           category: "交通",
           transportMode: "maglev",
-          transportNote: "搭上海磁浮前往浦東機場；龍陽路 → 浦東約 8 分鐘，營運約 06:45–21:40。"
+          duration: "約 8 分鐘",
+          transportNote: "搭上海磁浮前往浦東機場；龍陽路 → 浦東約 8 分鐘。"
         }),
         item("d5-airport", "17:00", "抵達浦東機場", {
+          endTime: "17:30",
           category: "機場",
           address: "上海浦東國際機場",
-          notes: "預計 17:00 抵達，預留報到、安檢與退稅／採買時間。"
+          notes: "預計 17:00 左右抵達。"
         }),
-        item("d5-flight-home", "20:05", "回程航班起飛", {
+        item("d5-checkin-flight", "17:30", "長榮 BR721 報到、安檢與退稅／採買", {
+          endTime: "20:05",
+          category: "機場手續",
+          address: "上海浦東國際機場",
+          duration: "約 2 小時 35 分鐘",
+          notes: "預留報到、安檢與退稅／採買時間。"
+        }),
+        item("d5-flight-home", "20:05", "BR721 起飛・回桃園", {
+          endTime: "22:00",
           category: "航班",
           transportMode: "flight",
           address: "上海浦東國際機場",
-          notes: "9/18 20:05 上海浦東出發。"
+          notes: "9/18 20:05 上海浦東出發，預計 22:00 抵達桃園。"
         })
       ],
       [
         segment("d5-t1", "飯店", "人民廣場店", "walk", "步行或短程接駁", "依體力"),
-        segment("d5-t2", "人民廣場", "飯店", "taxi", "回飯店取行李", "依路況"),
+        segment("d5-t2", "人民廣場", "飯店", "taxi", "回飯店取行李", "約 15 分鐘"),
         segment("d5-t3", "飯店", "龍陽路磁浮站", "taxi", "滴滴（16:00 出發）", "約 30 分鐘"),
-        segment("d5-t4", "龍陽路磁浮站", "浦東國際機場", "maglev", "上海磁浮", "約 8 分鐘")
+        segment("d5-t4", "龍陽路磁浮站", "浦東國際機場", "maglev", "上海磁浮", "約 8 分鐘"),
+        segment("d5-t5", "上海浦東國際機場", "桃園國際機場", "flight", "BR721", "約 2 小時")
       ]
     )
   ],
