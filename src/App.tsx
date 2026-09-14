@@ -33,6 +33,7 @@ import {
   Plane,
   PhoneCall,
   Plus,
+  Printer,
   RotateCcw,
   Route,
   Save,
@@ -61,6 +62,7 @@ import {
   formatFileSize,
   LocalTravelToolsRepository,
   normalizeExpenseRecord,
+  openExpensePdfPrintView,
   summarizeExpenses,
   type AttachmentCategory,
   type AttachmentMeta,
@@ -602,6 +604,18 @@ function App() {
     showToast("已下載旅費 JSON 與 CSV 統計。", "success");
   };
 
+  const exportExpensesPdf = (expenses: ExpenseRecord[], scopeLabel: string) => {
+    if (expenses.length === 0) {
+      showToast("目前篩選沒有旅費，請先選擇有記錄的日期或分類。", "error");
+      return;
+    }
+    if (!openExpensePdfPrintView({ expenses, scopeLabel, tripTitle: "上海 2026" })) {
+      showToast("無法開啟列印版，請允許此 App 開啟新視窗後再試一次。", "error");
+      return;
+    }
+    showToast("已開啟列印版，請在系統列印視窗選擇「儲存為 PDF」。", "success");
+  };
+
   const handleExpenseImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -761,6 +775,7 @@ function App() {
             onEditExpense={setEditingExpense}
             onDeleteExpense={deleteExpense}
             onExportExpenses={exportExpenses}
+            onExportExpensesPdf={exportExpensesPdf}
             onOcrExpense={() => paymentOcrInputRef.current?.click()}
             onImportExpenses={() => expenseImportInputRef.current?.click()}
             onAddAttachment={() => attachmentInputRef.current?.click()}
@@ -1536,6 +1551,7 @@ function TripInfoPage({
   onEditExpense,
   onDeleteExpense,
   onExportExpenses,
+  onExportExpensesPdf,
   onOcrExpense,
   onImportExpenses,
   onAddAttachment,
@@ -1554,6 +1570,7 @@ function TripInfoPage({
   onEditExpense: (expense: ExpenseRecord) => void;
   onDeleteExpense: (expenseId: string) => void;
   onExportExpenses: () => void;
+  onExportExpensesPdf: (expenses: ExpenseRecord[], scopeLabel: string) => void;
   onOcrExpense: () => void;
   onImportExpenses: () => void;
   onAddAttachment: () => void;
@@ -1570,7 +1587,7 @@ function TripInfoPage({
       <MetroMapCard />
       {members.length > 0 && <section className="info-card members-card"><div className="info-card-icon"><Users size={22} /></div><div className="info-card-content"><span className="eyebrow">TRAVEL PARTY</span><h2>成員</h2><div className="member-list">{members.map((member) => <span key={member}>{member}</span>)}</div></div></section>}
       <TaskChecklist tasks={trip.tasks} managerMode={managerMode} onAdd={onAddTask} onEdit={onEditTask} onDelete={onDeleteTask} onToggle={onToggleTask} />
-      {travelTools && <PrivateTravelTools managerMode={managerMode} days={trip.days} tools={travelTools} onAddExpense={onAddExpense} onEditExpense={onEditExpense} onDeleteExpense={onDeleteExpense} onExportExpenses={onExportExpenses} onOcrExpense={onOcrExpense} onImportExpenses={onImportExpenses} onAddAttachment={onAddAttachment} onDownloadAttachment={onDownloadAttachment} onDeleteAttachment={onDeleteAttachment} />}
+      {travelTools && <PrivateTravelTools managerMode={managerMode} days={trip.days} tools={travelTools} onAddExpense={onAddExpense} onEditExpense={onEditExpense} onDeleteExpense={onDeleteExpense} onExportExpenses={onExportExpenses} onExportExpensesPdf={onExportExpensesPdf} onOcrExpense={onOcrExpense} onImportExpenses={onImportExpenses} onAddAttachment={onAddAttachment} onDownloadAttachment={onDownloadAttachment} onDeleteAttachment={onDeleteAttachment} />}
     </div>
   );
 }
@@ -1733,6 +1750,7 @@ function PrivateTravelTools({
   onEditExpense,
   onDeleteExpense,
   onExportExpenses,
+  onExportExpensesPdf,
   onOcrExpense,
   onImportExpenses,
   onAddAttachment,
@@ -1746,6 +1764,7 @@ function PrivateTravelTools({
   onEditExpense: (expense: ExpenseRecord) => void;
   onDeleteExpense: (expenseId: string) => void;
   onExportExpenses: () => void;
+  onExportExpensesPdf: (expenses: ExpenseRecord[], scopeLabel: string) => void;
   onOcrExpense: () => void;
   onImportExpenses: () => void;
   onAddAttachment: () => void;
@@ -1753,28 +1772,39 @@ function PrivateTravelTools({
   onDeleteAttachment: (attachment: AttachmentMeta) => void;
 }) {
   const [categoryFilter, setCategoryFilter] = useState<ExpenseCategory | "全部">("全部");
+  const [dateFilter, setDateFilter] = useState("");
   const summary = summarizeExpenses(tools.expenses);
+  const dateExpenses = dateFilter ? tools.expenses.filter((expense) => expense.date === dateFilter) : tools.expenses;
+  const dateSummary = summarizeExpenses(dateExpenses);
   const sortedExpenses = [...tools.expenses].sort((a, b) => `${b.date}${b.createdAt}`.localeCompare(`${a.date}${a.createdAt}`));
-  const filteredExpenses = categoryFilter === "全部" ? sortedExpenses : sortedExpenses.filter((expense) => expense.category === categoryFilter);
+  const filteredExpenses = sortedExpenses.filter((expense) => (
+    (!dateFilter || expense.date === dateFilter) && (categoryFilter === "全部" || expense.category === categoryFilter)
+  ));
+  const selectedDay = days.find((day) => day.date === dateFilter);
+  const selectedDateLabel = dateFilter ? `${selectedDay ? `Day ${selectedDay.dayNumber} · ` : ""}${formatDate(dateFilter)}` : "全部日期";
+  const pdfScopeLabel = [selectedDateLabel, categoryFilter === "全部" ? undefined : `${categoryFilter}類`].filter((label): label is string => Boolean(label)).join(" · ");
   return (
     <section id="private-travel-tools" className="private-tools-section">
       <div className="section-heading"><div><span className="eyebrow">LOCAL ONLY</span><h2>旅行工具</h2><p className="section-description">旅費可直接記錄；資料只保存在這台裝置，不會寫入公開行程。</p></div><WalletCards size={21} /></div>
       <div className="private-tools-grid">
         <section className="tool-card private-tool-card">
-          <div className="tool-card-header expense-card-header"><div className="tool-card-title"><div className="info-card-icon expense-icon"><WalletCards size={20} /></div><div><span className="eyebrow">EXPENSES</span><h3>費用記帳</h3><p>台幣、人民幣、付款人與分類</p></div></div><div className="tool-header-actions expense-header-actions"><button className="secondary-button compact-button" aria-label="匯出旅費 JSON 與 CSV" onClick={onExportExpenses}><FileJson size={16} />匯出</button><button className="secondary-button compact-button" aria-label="匯入旅費" onClick={onImportExpenses}><Upload size={16} />匯入</button><button className="secondary-button compact-button" onClick={onOcrExpense}><FileText size={16} />辨識截圖</button><button className="primary-button compact-button" onClick={() => onAddExpense()}><Plus size={16} /> 新增</button></div></div>
+          <div className="tool-card-header expense-card-header"><div className="tool-card-title"><div className="info-card-icon expense-icon"><WalletCards size={20} /></div><div><span className="eyebrow">EXPENSES</span><h3>費用記帳</h3><p>台幣、人民幣、付款人與分類</p></div></div><div className="tool-header-actions expense-header-actions"><button className="secondary-button compact-button" aria-label="列印或儲存目前篩選的旅費 PDF" onClick={() => onExportExpensesPdf(filteredExpenses, pdfScopeLabel)}><Printer size={16} />PDF</button><button className="secondary-button compact-button" aria-label="匯出完整旅費 JSON 與 CSV" onClick={onExportExpenses}><FileJson size={16} />資料</button><button className="secondary-button compact-button" aria-label="匯入旅費" onClick={onImportExpenses}><Upload size={16} />匯入</button><button className="secondary-button compact-button" onClick={onOcrExpense}><FileText size={16} />辨識</button><button className="primary-button compact-button" onClick={() => onAddExpense()}><Plus size={16} /> 新增</button></div></div>
           <div className="expense-quick-add"><span>快速記錄</span><div>{EXPENSE_QUICK_PRESETS.map((preset) => <button key={preset.category} type="button" onClick={() => onAddExpense({ title: preset.title, category: preset.category })}>{preset.label}</button>)}</div></div>
           <div className="expense-total"><div><span>人民幣</span><strong>{formatExpenseAmount(summary.byCurrency.CNY, "CNY")}</strong></div><div><span>新台幣</span><strong>{formatExpenseAmount(summary.byCurrency.TWD, "TWD")}</strong></div><span>{tools.expenses.length} 筆記錄</span></div>
           {Object.keys(summary.byCategory).length > 0 && <div className="expense-breakdown">{EXPENSE_CATEGORIES.filter((category) => summary.byCategory[category] !== undefined).map((category) => <span key={category}>{category} {formatExpenseTotals(summary.byCategory[category]!)}</span>)}</div>}
           {Object.keys(summary.byPayer).length > 0 && <div className="expense-breakdown expense-payer-breakdown">{Object.entries(summary.byPayer).map(([payer, totals]) => <span key={payer}>付款：{payer} {formatExpenseTotals(totals)}</span>)}</div>}
-          <div className="expense-filter" aria-label="篩選旅費分類"><span>查看</span><button type="button" className={categoryFilter === "全部" ? "is-selected" : ""} onClick={() => setCategoryFilter("全部")}>全部</button>{EXPENSE_CATEGORIES.map((category) => <button type="button" key={category} className={categoryFilter === category ? "is-selected" : ""} onClick={() => setCategoryFilter(category)}>{category}</button>)}</div>
+          <div className="expense-date-controls" aria-label="依日期查看旅費"><div className="expense-date-input"><CalendarDays size={16} /><label><span>選擇日期</span><input type="date" value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} aria-label="選擇旅費日期" /></label></div><button type="button" className={!dateFilter ? "is-selected" : ""} onClick={() => setDateFilter("")}>全部日期</button></div>
+          <div className="expense-day-tabs" aria-label="依行程日查看旅費"><button type="button" className={!dateFilter ? "is-selected" : ""} onClick={() => setDateFilter("")}>全部</button>{days.map((day) => <button type="button" key={day.id} className={dateFilter === day.date ? "is-selected" : ""} onClick={() => setDateFilter(day.date)}>Day {day.dayNumber} · {formatMonthDay(day.date)}</button>)}</div>
+          {dateFilter && <div className="expense-date-total" aria-live="polite"><div><span>{selectedDateLabel} 當日總花費</span><small>{dateExpenses.length} 筆記錄 · 幣別分開統計</small></div><strong>{formatExpenseAmount(dateSummary.byCurrency.CNY, "CNY")}</strong><strong>{formatExpenseAmount(dateSummary.byCurrency.TWD, "TWD")}</strong></div>}
+          <div className="expense-filter" aria-label="篩選旅費分類"><span>分類</span><button type="button" className={categoryFilter === "全部" ? "is-selected" : ""} onClick={() => setCategoryFilter("全部")}>全部</button>{EXPENSE_CATEGORIES.map((category) => <button type="button" key={category} className={categoryFilter === category ? "is-selected" : ""} onClick={() => setCategoryFilter(category)}>{category}</button>)}</div>
           <div className="expense-list">
             {filteredExpenses.map((expense) => (
               <div className="expense-row" key={expense.id}><div className="expense-copy"><strong>{expense.title}</strong><span>{expense.date}{expense.dayNumber ? ` · Day ${expense.dayNumber}` : ""} · {expense.category}</span><small>{expense.payer} · {expense.paymentMethod ?? "付款方式未填"}{expense.note ? ` · ${expense.note}` : ""}</small></div><strong className="expense-amount">{formatExpenseAmount(expense.amount, expense.currency)}</strong><div className="item-admin-actions"><button className="small-icon-button" aria-label="編輯旅費" onClick={() => onEditExpense(expense)}><Pencil size={13} /></button><button className="small-icon-button danger" aria-label="刪除旅費" onClick={() => onDeleteExpense(expense.id)}><Trash2 size={13} /></button></div></div>
             ))}
             {tools.expenses.length === 0 && <p className="tool-empty">還沒有旅費記錄，先用上方按鈕記下機票、飯店或餐費。</p>}
-            {tools.expenses.length > 0 && filteredExpenses.length === 0 && <p className="tool-empty">這個分類目前沒有記錄。</p>}
+            {tools.expenses.length > 0 && filteredExpenses.length === 0 && <p className="tool-empty">{dateFilter ? "這一天目前沒有符合篩選的記錄。" : "這個分類目前沒有記錄。"}</p>}
           </div>
-          <p className="tool-note">旅費只保存在目前裝置，首頁即可新增、編輯與刪除；下載 JSON／CSV 做備份或旅後統計。行程日可用來對照 Day 1–5。</p>
+          <p className="tool-note">旅費只保存在目前裝置，首頁即可新增、編輯與刪除；可選日期查看當日總花費，PDF 會依目前日期與分類篩選整理。JSON／CSV 則保留完整帳本備份。</p>
         </section>
 
         {managerMode && <section className="tool-card private-tool-card">

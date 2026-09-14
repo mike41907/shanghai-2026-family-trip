@@ -3567,7 +3567,7 @@ code {
 
 .expense-header-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   flex: 1 1 100%;
   min-width: 0;
   justify-content: stretch;
@@ -3645,6 +3645,137 @@ code {
 
 .expense-payer-breakdown {
   margin-top: 6px;
+}
+
+.expense-date-controls {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.expense-date-input {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 42px;
+  flex: 1 1 245px;
+  gap: 9px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.expense-date-input > svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.expense-date-input label {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  gap: 8px;
+}
+
+.expense-date-input span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.expense-date-input input {
+  min-width: 0;
+  flex: 1;
+  padding: 3px 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.expense-date-controls > button,
+.expense-day-tabs button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink-soft);
+  background: var(--surface-soft);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.expense-date-controls > button.is-selected,
+.expense-day-tabs button.is-selected {
+  border-color: var(--brand);
+  color: #fff;
+  background: var(--brand);
+}
+
+.expense-day-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.expense-day-tabs button {
+  min-height: 31px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.expense-date-total {
+  display: grid;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 14px;
+  margin-top: 9px;
+  padding: 12px 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--accent-soft) 62%, var(--surface));
+}
+
+.expense-date-total > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.expense-date-total span {
+  overflow: hidden;
+  color: var(--brand-deep);
+  font-size: 12px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-date-total small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.expense-date-total > strong {
+  color: var(--ink);
+  font-size: 15px;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
 }
 
 .expense-filter {
@@ -3929,6 +4060,23 @@ code {
   .expense-header-actions > button {
     padding-right: 7px;
     padding-left: 7px;
+  }
+
+  .expense-date-input {
+    flex-basis: 100%;
+  }
+
+  .expense-date-controls > button {
+    flex: 1 1 auto;
+  }
+
+  .expense-date-total {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px 12px;
+  }
+
+  .expense-date-total > div {
+    grid-column: 1 / -1;
   }
 
   .today-expense-total > span {
